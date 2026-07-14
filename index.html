@@ -208,15 +208,21 @@ input[type=text]{ min-width:220px; }
 #modal{
   background: var(--espresso-2); border:1px solid var(--line); border-radius:14px;
   max-width:640px; width:100%; padding:30px 32px; box-shadow: var(--shadow);
-  margin-bottom: 5vh;
+  margin-bottom: 5vh; position:relative;
 }
 #modal .close{
-  float:right; background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;
+  position:absolute; top:18px; right:20px;
+  background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; z-index:2;
 }
 #modal .close:hover{ color:var(--cream); }
-.modal-tier-row{ display:flex; align-items:center; gap:10px; margin-bottom:4px;}
-.modal-name{ font-family:'Fraunces',serif; font-weight:600; font-size:26px; color:var(--cream); }
-.modal-sub{ color:var(--muted); font-size:13px; margin-bottom:16px; }
+.modal-logo{
+  position:absolute; top:16px; right:54px; width:62px; height:62px; color:var(--gold-hi);
+}
+.brand-row{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:36px; height:36px; flex-shrink:0; color:var(--gold-hi); }
+.modal-tier-row{ display:flex; align-items:center; gap:10px; margin-bottom:4px; padding-right:120px;}
+.modal-name{ font-family:'Fraunces',serif; font-weight:600; font-size:26px; color:var(--cream); padding-right:110px; }
+.modal-sub{ color:var(--muted); font-size:13px; margin-bottom:16px; padding-right:110px; }
 .score-row{ display:flex; gap:22px; flex-wrap:wrap; margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid var(--line);}
 .score-item .n{ font-family:'IBM Plex Mono',monospace; font-size:20px; color:var(--gold-hi); font-weight:600;}
 .score-item .l{ font-size:10.5px; text-transform:uppercase; color:var(--muted); letter-spacing:.05em; margin-top:2px;}
@@ -297,6 +303,7 @@ svg text{ font-family:'IBM Plex Mono', monospace; }
     flex-shrink: 0;
   }
   .brand small{ display: none; }
+  .brand-mark{ width: 26px; height: 26px; }
   nav{
     margin-top: 0;
     flex-direction: row;
@@ -346,7 +353,11 @@ svg text{ font-family:'IBM Plex Mono', monospace; }
   /* Modal: fit narrow viewports, tighten padding */
   #overlay{ padding: 4vh 10px; }
   #modal{ padding: 22px 18px; border-radius: 12px; }
-  .modal-name{ font-size: 21px; }
+  .modal-name{ font-size: 21px; padding-right: 64px; }
+  .modal-sub{ padding-right: 64px; }
+  .modal-tier-row{ padding-right: 64px; }
+  .modal-logo{ width: 40px; height: 40px; top: 14px; right: 40px; }
+  #modal .close{ top: 14px; right: 14px; }
   .score-row{ gap: 14px 22px; }
   .score-item .n{ font-size: 17px; }
   .catbar-label{ width: 108px; font-size: 11px; }
@@ -374,9 +385,48 @@ svg text{ font-family:'IBM Plex Mono', monospace; }
 </head>
 <body>
 
+<svg style="display:none" aria-hidden="true">
+  <symbol id="logo-mark" viewBox="0 0 200 200">
+    <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" stroke-width="3"/>
+    <g transform="translate(100,92)">
+      <path d="M -28,-10 L -24,26 C -24,34 24,34 24,26 L 28,-10 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M 28,-6 C 44,-6 46,16 28,16" fill="none" stroke="currentColor" stroke-width="3"/>
+      <line x1="-24" y1="-10" x2="28" y2="-10" stroke="var(--espresso-2)" stroke-width="2"/>
+      <path d="M -10,-18 C -14,-24 -6,-28 -10,-34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 4,-18 C 0,-24 8,-28 4,-34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </symbol>
+  <symbol id="logo-full" viewBox="0 0 260 260">
+    <defs>
+      <path id="logoTopArc" d="M 35,130 A 95,95 0 1 1 225,130" fill="none"/>
+      <path id="logoBotArc" d="M 225,130 A 95,95 0 1 1 35,130" fill="none"/>
+    </defs>
+    <circle cx="130" cy="130" r="115" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="130" cy="130" r="104" fill="none" stroke="currentColor" stroke-width="1.25"/>
+    <circle cx="35" cy="130" r="3.5" fill="currentColor"/>
+    <circle cx="225" cy="130" r="3.5" fill="currentColor"/>
+    <text font-family="Georgia, serif" font-size="10.5" letter-spacing="1.5" fill="currentColor" text-anchor="middle">
+      <textPath href="#logoTopArc" startOffset="50%">A.J.'S SAN DIEGO COFFEE GUIDE</textPath>
+    </text>
+    <text font-family="Georgia, serif" font-size="10" letter-spacing="1.5" fill="currentColor" text-anchor="middle">
+      <textPath href="#logoBotArc" startOffset="50%">FIRST EDITION &#183; 2026</textPath>
+    </text>
+    <g transform="translate(130,118)">
+      <path d="M -28,-10 L -24,26 C -24,34 24,34 24,26 L 28,-10 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M 28,-6 C 44,-6 46,16 28,16" fill="none" stroke="currentColor" stroke-width="3"/>
+      <line x1="-24" y1="-10" x2="28" y2="-10" stroke="var(--espresso-2)" stroke-width="2"/>
+      <path d="M -10,-18 C -14,-24 -6,-28 -10,-34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 4,-18 C 0,-24 8,-28 4,-34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </symbol>
+</svg>
+
 <div id="app">
   <aside id="sidebar">
-    <div class="brand">A.J.'s Coffee Guide<small>San Diego · 2026 · Dashboard</small></div>
+    <div class="brand-row">
+      <svg class="brand-mark"><use href="#logo-mark"/></svg>
+      <div class="brand">A.J.'s Coffee Guide<small>San Diego · 2026 · Dashboard</small></div>
+    </div>
     <nav>
       <button class="navbtn active" data-tab="home"><span class="ico">☕</span> Home</button>
       <button class="navbtn" data-tab="rankings"><span class="ico">🏆</span> Rankings</button>
@@ -457,6 +507,7 @@ function openProfile(name){
 
   el.innerHTML = `
     <button class="close" onclick="closeModal()">✕</button>
+    <svg class="modal-logo"><use href="#logo-full"/></svg>
     <div class="modal-tier-row"><span class="tierbadge ${s.tier}">${s.tier}</span><span style="color:var(--muted);font-size:12px;">#${s.balancedRank} of ${DATA.meta.total} · ${s.cluster}</span></div>
     <div class="modal-name">${esc(s.name)}</div>
     <div class="modal-sub">${esc(s.venueType)} · ${esc(s.city)}, CA</div>
