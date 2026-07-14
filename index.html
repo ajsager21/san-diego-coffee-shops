@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A.J.'s San Diego Coffee Guide — Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --espresso: #1c1410;
+  --espresso-2: #251b15;
+  --panel: #2b201a;
+  --panel-hi: #362820;
+  --line: #4a382d;
+  --cream: #f3e9d8;
+  --cream-dim: #cbb89f;
+  --muted: #9c8672;
+  --gold: #cf9d3f;
+  --gold-hi: #e8bc63;
+  --sage: #8fae7a;
+  --steel: #7ea3bc;
+  --taupe: #a5876c;
+  --dark-roast: #7a4a34;
+  --rust: #b25c3f;
+  --tier-S: #cf9d3f;
+  --tier-A: #8fae7a;
+  --tier-B: #7ea3bc;
+  --tier-C: #a5876c;
+  --tier-D: #7a4a34;
+  --radius: 10px;
+  --shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background: var(--espresso);
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  min-height:100vh;
+}
+.mono{font-family:'IBM Plex Mono', monospace;}
+.display{font-family:'Fraunces', serif;}
+
+#app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* ---------- SIDEBAR ---------- */
+#sidebar{
+  width: 232px;
+  flex-shrink:0;
+  background: var(--espresso-2);
+  border-right: 1px solid var(--line);
+  padding: 24px 16px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+.brand{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size: 20px;
+  line-height:1.25;
+  color:var(--cream);
+  margin-bottom: 4px;
+}
+.brand small{
+  display:block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-top:6px;
+}
+nav{margin-top:28px; display:flex; flex-direction:column; gap:2px;}
+.navbtn{
+  display:flex; align-items:center; gap:10px;
+  background:transparent; border:none; text-align:left;
+  color: var(--cream-dim);
+  font-family:'Inter',sans-serif; font-size:13.5px; font-weight:500;
+  padding:10px 12px; border-radius:8px; cursor:pointer;
+  transition: background .15s, color .15s;
+}
+.navbtn:hover{ background: var(--panel); color:var(--cream); }
+.navbtn.active{ background: var(--panel-hi); color: var(--gold-hi); }
+.navbtn .ico{ font-size:15px; width:18px; text-align:center; }
+
+.sidebar-foot{
+  margin-top:28px; padding-top:16px; border-top:1px solid var(--line);
+  font-size:11px; color:var(--muted); line-height:1.6;
+}
+
+/* ---------- MAIN ---------- */
+#main{ flex:1; min-width:0; padding: 32px 40px 80px; }
+.section{ display:none; }
+.section.active{ display:block; animation: fadein .25s ease; }
+@keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+.page-title{
+  font-family:'Fraunces', serif; font-weight:600; font-size:30px; color:var(--cream);
+  margin:0 0 6px;
+}
+.page-sub{ color:var(--cream-dim); font-size:14px; margin: 0 0 28px; max-width:680px; line-height:1.5;}
+
+/* ---------- CARDS / GRID ---------- */
+.card{
+  background: var(--panel);
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.grid{ display:grid; gap:16px; }
+.grid-4{ grid-template-columns: repeat(4, 1fr); }
+.grid-3{ grid-template-columns: repeat(3, 1fr); }
+.grid-2{ grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1100px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-3{grid-template-columns:repeat(2,1fr);} }
+
+.stat-num{ font-family:'Fraunces', serif; font-size:34px; font-weight:600; color:var(--gold-hi); line-height:1;}
+.stat-label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:8px;}
+
+/* ---------- TABLE ---------- */
+table{ width:100%; border-collapse:collapse; font-size:13.5px;}
+thead th{
+  text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--muted); padding:10px 12px; border-bottom:1px solid var(--line); cursor:pointer; user-select:none;
+  white-space:nowrap;
+}
+thead th:hover{ color:var(--gold-hi); }
+tbody td{ padding:10px 12px; border-bottom:1px solid rgba(74,56,45,0.5); vertical-align:middle;}
+tbody tr{ cursor:pointer; transition: background .12s; }
+tbody tr:hover{ background: var(--panel-hi); }
+.shopname{ color:var(--cream); font-weight:600; }
+.venuetag{ font-size:10.5px; color:var(--muted); }
+
+.tierbadge{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:26px; height:22px; padding:0 8px; border-radius:6px;
+  font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+  color:#1c1410;
+}
+.tierbadge.S{ background: var(--tier-S); }
+.tierbadge.A{ background: var(--tier-A); }
+.tierbadge.B{ background: var(--tier-B); }
+.tierbadge.C{ background: var(--tier-C); color:var(--cream); }
+.tierbadge.D{ background: var(--tier-D); color:var(--cream); }
+
+/* ---------- FILTER BAR ---------- */
+.filterbar{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  margin-bottom:18px; padding:14px 16px; background:var(--panel); border:1px solid var(--line); border-radius: var(--radius);
+}
+input[type=text], select{
+  background: var(--espresso-2); border:1px solid var(--line); color:var(--cream);
+  font-family:'Inter',sans-serif; font-size:13px; padding:8px 12px; border-radius:7px;
+  outline:none;
+}
+input[type=text]:focus, select:focus{ border-color: var(--gold); }
+input[type=text]{ min-width:220px; }
+.filter-count{ margin-left:auto; font-size:12px; color:var(--muted); font-family:'IBM Plex Mono',monospace;}
+
+/* ---------- BUTTONS / CHIPS ---------- */
+.chip{
+  display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:20px;
+  background: var(--panel-hi); border:1px solid var(--line); color:var(--cream-dim);
+  font-size:12px; cursor:pointer; transition: all .12s;
+}
+.chip:hover{ border-color:var(--gold); color:var(--gold-hi); }
+.chip.selected{ background: var(--gold); color:#1c1410; border-color:var(--gold); font-weight:600;}
+.btn{
+  background: var(--gold); color:#1c1410; border:none; font-weight:600; font-size:13px;
+  padding:9px 16px; border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif;
+}
+.btn:hover{ background: var(--gold-hi); }
+.btn.ghost{ background:transparent; color:var(--cream-dim); border:1px solid var(--line); }
+.btn.ghost:hover{ color:var(--cream); border-color:var(--gold); }
+
+/* ---------- AWARD CARDS ---------- */
+.award-card{
+  background: var(--panel); border:1px solid var(--line); border-radius: var(--radius);
+  padding:16px 18px; cursor:pointer; transition: transform .12s, border-color .12s;
+}
+.award-card:hover{ border-color: var(--gold); transform: translateY(-1px); }
+.award-title{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold); font-weight:600; margin-bottom:6px;}
+.award-winner{ font-family:'Fraunces', serif; font-size:19px; font-weight:600; color:var(--cream); margin-bottom:6px;}
+.award-blurb{ font-size:12.5px; color:var(--cream-dim); line-height:1.45; }
+
+/* ---------- ARCHETYPE CARDS ---------- */
+.archetype-card{
+  background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:22px;
+}
+.archetype-name{ font-family:'Fraunces',serif; font-weight:600; font-size:21px; color:var(--gold-hi); margin-bottom:4px;}
+.archetype-meta{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:10px;}
+.archetype-tag{ font-size:13px; color:var(--cream-dim); line-height:1.5; margin-bottom:14px;}
+.member-list{ display:flex; flex-wrap:wrap; gap:6px; }
+
+/* ---------- MODAL ---------- */
+#overlay{
+  position:fixed; inset:0; background:rgba(10,7,5,0.7); backdrop-filter: blur(2px);
+  display:none; align-items:flex-start; justify-content:center; z-index:100; padding: 5vh 20px;
+  overflow-y:auto;
+}
+#overlay.show{ display:flex; }
+#modal{
+  background: var(--espresso-2); border:1px solid var(--line); border-radius:14px;
+  max-width:640px; width:100%; padding:30px 32px; box-shadow: var(--shadow);
+  margin-bottom: 5vh;
+}
+#modal .close{
+  float:right; background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;
+}
+#modal .close:hover{ color:var(--cream); }
+.modal-tier-row{ display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+.modal-name{ font-family:'Fraunces',serif; font-weight:600; font-size:26px; color:var(--cream); }
+.modal-sub{ color:var(--muted); font-size:13px; margin-bottom:16px; }
+.score-row{ display:flex; gap:22px; flex-wrap:wrap; margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid var(--line);}
+.score-item .n{ font-family:'IBM Plex Mono',monospace; font-size:20px; color:var(--gold-hi); font-weight:600;}
+.score-item .l{ font-size:10.5px; text-transform:uppercase; color:var(--muted); letter-spacing:.05em; margin-top:2px;}
+.catbar-row{ display:flex; align-items:center; gap:10px; margin-bottom:6px; font-size:12px; }
+.catbar-label{ width:150px; flex-shrink:0; color:var(--cream-dim); }
+.catbar-track{ flex:1; height:7px; background: var(--panel); border-radius:4px; overflow:hidden; }
+.catbar-fill{ height:100%; background: linear-gradient(90deg, var(--dark-roast), var(--gold)); border-radius:4px; }
+.catbar-val{ width:28px; text-align:right; font-family:'IBM Plex Mono',monospace; color:var(--muted); }
+.modal-section-title{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--gold); margin: 18px 0 8px; font-weight:600;}
+.modal-report{ font-size:13.5px; line-height:1.6; color:var(--cream-dim); }
+.rec-chip{ margin-right:6px; margin-bottom:6px; }
+
+/* ---------- MAP ---------- */
+.map-wrap{ background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:20px; }
+.map-dot{ cursor:pointer; transition: r .12s; }
+.map-dot:hover{ filter: brightness(1.3); }
+.map-label{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; fill: var(--cream-dim); pointer-events:none; }
+
+/* ---------- MISC ---------- */
+.section-label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--gold); font-weight:600; margin: 30px 0 12px;}
+.section-label:first-child{ margin-top:0; }
+::-webkit-scrollbar{ width:9px; height:9px; }
+::-webkit-scrollbar-thumb{ background: var(--panel-hi); border-radius:5px; }
+::-webkit-scrollbar-track{ background: transparent; }
+a{ color: var(--gold-hi); }
+
+.tabs-inline{ display:flex; gap:6px; margin-bottom:20px; }
+.tab-inline-btn{
+  background:var(--panel); border:1px solid var(--line); color:var(--cream-dim);
+  padding:8px 16px; border-radius:20px; font-size:12.5px; cursor:pointer; font-family:'Inter',sans-serif; font-weight:500;
+}
+.tab-inline-btn.active{ background: var(--gold); color:#1c1410; border-color:var(--gold); font-weight:600;}
+
+.compare-slot{
+  background:var(--panel); border:1px dashed var(--line); border-radius:var(--radius);
+  padding:14px; min-height:64px; display:flex; align-items:center; justify-content:center;
+  color:var(--muted); font-size:12.5px; text-align:center;
+}
+.compare-slot.filled{ border-style:solid; border-color:var(--gold); color:var(--cream); flex-direction:column; align-items:flex-start; }
+.compare-slot .remove{ align-self:flex-end; cursor:pointer; color:var(--muted); font-size:11px; }
+
+svg text{ font-family:'IBM Plex Mono', monospace; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">A.J.'s Coffee Guide<small>San Diego · 2026 · Dashboard</small></div>
+    <nav>
+      <button class="navbtn active" data-tab="home"><span class="ico">☕</span> Home</button>
+      <button class="navbtn" data-tab="rankings"><span class="ico">🏆</span> Rankings</button>
+      <button class="navbtn" data-tab="awards"><span class="ico">🎖</span> Awards</button>
+      <button class="navbtn" data-tab="archetypes"><span class="ico">◆</span> Archetypes</button>
+      <button class="navbtn" data-tab="explorer"><span class="ico">📍</span> Map &amp; Neighborhoods</button>
+      <button class="navbtn" data-tab="search"><span class="ico">🔎</span> Search &amp; Compare</button>
+    </nav>
+    <div class="sidebar-foot">
+      54 shops · first edition<br>Balanced, A.J., Consistency &amp; Signature scoring · Jenks tiers · K-Means archetypes
+    </div>
+  </aside>
+
+  <main id="main">
+
+    <!-- HOME -->
+    <section class="section active" id="tab-home"></section>
+    <!-- RANKINGS -->
+    <section class="section" id="tab-rankings"></section>
+    <!-- AWARDS -->
+    <section class="section" id="tab-awards"></section>
+    <!-- ARCHETYPES -->
+    <section class="section" id="tab-archetypes"></section>
+    <!-- EXPLORER -->
+    <section class="section" id="tab-explorer"></section>
+    <!-- SEARCH -->
+    <section class="section" id="tab-search"></section>
+
+  </main>
+</div>
+
+<div id="overlay">
+  <div id="modal"></div>
+</div>
+
+<script>
+const DATA = {"shops": [{"name": "Cafe Matinal", "venueType": "Coffee Cart", "city": "Mission Bay", "lat": 32.77, "lon": -117.22, "tier": "S", "balanced": 8.4, "balancedRank": 1, "aj": 412.0, "ajRank": 1, "consistency": 7.78, "signature": 9.2, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 10.0, "Parking": 8.0, "Milk Balance": 10.0, "Ambiance": 8.0, "Menu Variety": 7.0, "Price": 10.0, "Wait Time": 3.0, "Service": 10.0, "Studyability": null, "Exceptional?": 10.0, "Proximity to other things": 8.0}, "strengths": ["Coffee Taste", "Milk Balance", "Price"], "weaknesses": ["Wait Time"], "bestFor": ["serious coffee drinkers"], "notIdealFor": ["settling in to work or study", "anyone in a hurry"], "awards": ["Coffee Shop of the Year", "A.J.'s Coffee Shop of the Year", "Best Coffee", "Best Service", "Best Milk Drinks", "Best Value", "Most Exceptional", "Best Coffee Cart"], "report": "Cafe Matinal lands as a S-Tier destination, ranked #1 of 54 this edition, operating as a cart-based operation that lives or dies on speed and drink quality in Mission Bay, CA. The draw here is genuinely excellent coffee (10/10 taste), expertly balanced milk drinks (10/10), and strong value for the price. The tradeoff is a slower wait. This edition's hardware: Coffee Shop of the Year, A.J.'s Coffee Shop of the Year, Best Coffee, Best Service, Best Milk Drinks, Best Value, Most Exceptional, and Best Coffee Cart. Best for serious coffee drinkers. Less ideal for settling in to work or study and anyone in a hurry.", "recommendations": [["Bird Rock Coffee", 0.729], ["Better Buzz", 0.659], ["Cafe Alessie", 0.588]]}, {"name": "Inkafe", "venueType": "Cafe", "city": "Mission Bay", "lat": 32.77, "lon": -117.22, "tier": "S", "balanced": 8.27, "balancedRank": 2, "aj": 399.0, "ajRank": 2, "consistency": 8.44, "signature": 8.97, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 9.0, "Parking": 8.0, "Milk Balance": 8.0, "Ambiance": 10.0, "Menu Variety": 9.0, "Price": 6.0, "Wait Time": 10.0, "Service": 9.0, "Studyability": 9.0, "Exceptional?": 5.0, "Proximity to other things": 8.0}, "strengths": ["Ambiance", "Wait Time", "Coffee Taste"], "weaknesses": ["Exceptional?", "Price"], "bestFor": ["serious coffee drinkers", "vibe-seekers", "remote work / studying", "grab-and-go convenience"], "notIdealFor": ["budget-conscious visits"], "awards": ["Best Ambiance", "Fastest Service", "Most Well Rounded"], "report": "Inkafe lands as a S-Tier destination, ranked #2 of 54 this edition, operating as a full sit-down caf\u00e9 in Mission Bay, CA. The draw here is strong ambiance (10/10), fast turnaround, and genuinely excellent coffee (9/10 taste). The tradeoff is nothing that particularly stands out and a steeper price tag. This edition's hardware: Best Ambiance, Fastest Service, and Most Well Rounded. Best for serious coffee drinkers, vibe-seekers, remote work / studying, and grab-and-go convenience. Less ideal for budget-conscious visits.", "recommendations": [["Common Grounds Coffee", 0.661], ["Lovesong Coffee", 0.627], ["The Grounds Coffee Bar", 0.562]]}, {"name": "Red White and Badass Brew", "venueType": "Drive-Thru", "city": "El Cajon", "lat": 32.79, "lon": -116.96, "tier": "S", "balanced": 8.1, "balancedRank": 3, "aj": 389.0, "ajRank": 6, "consistency": 7.4, "signature": 9.05, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 9.0, "Parking": 10.0, "Milk Balance": 9.0, "Ambiance": 3.0, "Menu Variety": 9.0, "Price": 10.0, "Wait Time": 7.0, "Service": 10.0, "Studyability": null, "Exceptional?": 10.0, "Proximity to other things": 4.0}, "strengths": ["Parking", "Price", "Service"], "weaknesses": ["Ambiance", "Proximity to other things"], "bestFor": ["quick car-friendly stops"], "notIdealFor": ["settling in to work or study"], "awards": ["Worth the Drive", "Best Drive-Thru"], "report": "Red White and Badass Brew lands as a S-Tier destination, ranked #3 of 54 this edition, operating as a drive-thru built for speed over lingering in El Cajon, CA. The draw here is easy parking, strong value for the price, and standout service (10/10). The tradeoff is underwhelming ambiance and a location that's out of the way. This edition's hardware: Worth the Drive and Best Drive-Thru. Best for quick car-friendly stops. Less ideal for settling in to work or study.", "recommendations": [["Better Buzz", 0.67], ["Cafe Matinal", 0.564], ["The Lean Bean", 0.473]]}, {"name": "Better Buzz", "venueType": "Cafe/Drive Thru", "city": "La Mesa", "lat": 32.77, "lon": -117.02, "tier": "S", "balanced": 7.82, "balancedRank": 4, "aj": 388.0, "ajRank": 7, "consistency": 8.11, "signature": 8.75, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 9.0, "Parking": 10.0, "Milk Balance": 9.0, "Ambiance": 7.0, "Menu Variety": 6.0, "Price": 8.0, "Wait Time": 8.0, "Service": 9.0, "Studyability": 4.0, "Exceptional?": 10.0, "Proximity to other things": 6.0}, "strengths": ["Parking", "Exceptional?", "Coffee Taste"], "weaknesses": ["Studyability", "Menu Variety", "Proximity to other things"], "bestFor": ["serious coffee drinkers", "quick car-friendly stops"], "notIdealFor": ["picky or adventurous orderers"], "awards": [], "report": "Better Buzz lands as a S-Tier destination, ranked #4 of 54 this edition, operating as a hybrid that offers both a counter and a drive-thru lane in La Mesa, CA. The draw here is easy parking, an exceptional, memorable factor (10/10), and genuinely excellent coffee (9/10 taste). The tradeoff is not a place to settle in for long, a narrow menu, and a location that's out of the way. Best for serious coffee drinkers and quick car-friendly stops. Less ideal for picky or adventurous orderers.", "recommendations": [["Red White and Badass Brew", 0.67], ["Cafe Matinal", 0.659], ["Cafe Alessie", 0.48]]}, {"name": "6 Grados", "venueType": "Cafe", "city": "Chula Vista", "lat": 32.64, "lon": -117.08, "tier": "S", "balanced": 7.64, "balancedRank": 5, "aj": 369.0, "ajRank": 9, "consistency": 7.75, "signature": 8.82, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.0, "Parking": 8.0, "Milk Balance": 9.0, "Ambiance": 10.0, "Menu Variety": 9.0, "Price": 5.0, "Wait Time": 6.0, "Service": 10.0, "Studyability": 10.0, "Exceptional?": 5.0, "Proximity to other things": 4.0}, "strengths": ["Ambiance", "Service", "Studyability"], "weaknesses": ["Proximity to other things", "Price", "Exceptional?"], "bestFor": ["vibe-seekers", "remote work / studying"], "notIdealFor": ["budget-conscious visits"], "awards": [], "report": "6 Grados lands as a S-Tier destination, ranked #5 of 54 this edition, operating as a full sit-down caf\u00e9 in Chula Vista, CA. The draw here is strong ambiance (10/10), standout service (10/10), and genuine work/study comfort. The tradeoff is a location that's out of the way, a steeper price tag, and nothing that particularly stands out. Best for vibe-seekers and remote work / studying. Less ideal for budget-conscious visits.", "recommendations": [["Lakeside Social", 0.692], ["Vinam Cafe", 0.608], ["Stir It Up", 0.603]]}, {"name": "Cafe Bella", "venueType": "Cafe", "city": "El Cajon", "lat": 32.79, "lon": -116.96, "tier": "S", "balanced": 7.64, "balancedRank": 5, "aj": 360.0, "ajRank": 12, "consistency": 7.09, "signature": 8.82, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.0, "Parking": 10.0, "Milk Balance": 8.0, "Ambiance": 6.0, "Menu Variety": 8.0, "Price": 7.0, "Wait Time": 10.0, "Service": 10.0, "Studyability": 10.0, "Exceptional?": 0.0, "Proximity to other things": 7.0}, "strengths": ["Parking", "Wait Time", "Service"], "weaknesses": ["Exceptional?", "Ambiance"], "bestFor": ["remote work / studying", "quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": ["Best Parking", "Best Study Spot"], "report": "Cafe Bella lands as a S-Tier destination, ranked #6 of 54 this edition, operating as a full sit-down caf\u00e9 in El Cajon, CA. The draw here is easy parking, fast turnaround, and standout service (10/10). The tradeoff is nothing that particularly stands out and underwhelming ambiance. This edition's hardware: Best Parking and Best Study Spot. Best for remote work / studying, quick car-friendly stops, and grab-and-go convenience. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["The Lean Bean", 0.717], ["Inkafe", 0.527], ["Cuppa Cuppa coffee", 0.492]]}, {"name": "Bird Rock Coffee", "venueType": "Cafe", "city": "La Jolla", "lat": 32.84, "lon": -117.27, "tier": "S", "balanced": 7.59, "balancedRank": 7, "aj": 394.0, "ajRank": 4, "consistency": 7.94, "signature": 8.71, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 9.5, "Parking": 4.0, "Milk Balance": 8.0, "Ambiance": 10.0, "Menu Variety": 6.0, "Price": 6.0, "Wait Time": 5.0, "Service": 9.0, "Studyability": 8.0, "Exceptional?": 10.0, "Proximity to other things": 8.0}, "strengths": ["Ambiance", "Exceptional?", "Coffee Taste"], "weaknesses": ["Parking", "Wait Time", "Menu Variety"], "bestFor": ["serious coffee drinkers", "vibe-seekers", "remote work / studying"], "notIdealFor": ["drivers needing easy parking", "anyone in a hurry", "picky or adventurous orderers"], "awards": [], "report": "Bird Rock Coffee lands as a S-Tier destination, ranked #7 of 54 this edition, operating as a full sit-down caf\u00e9 in La Jolla, CA. The draw here is strong ambiance (10/10), an exceptional, memorable factor (10/10), and genuinely excellent coffee (9.5/10 taste). The tradeoff is tricky parking, a slower wait, and a narrow menu. Best for serious coffee drinkers, vibe-seekers, and remote work / studying. Less ideal for drivers needing easy parking, anyone in a hurry, and picky or adventurous orderers.", "recommendations": [["The Living Room Coffeehouse", 0.847], ["Cafe Matinal", 0.729], ["Vinam Cafe", 0.719]]}, {"name": "The Living Room Coffeehouse", "venueType": "Cafe", "city": "La Jolla", "lat": 32.84, "lon": -117.27, "tier": "S", "balanced": 7.59, "balancedRank": 7, "aj": 398.0, "ajRank": 3, "consistency": 7.8, "signature": 8.71, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 9.5, "Parking": 2.0, "Milk Balance": 8.0, "Ambiance": 10.0, "Menu Variety": 8.0, "Price": 7.0, "Wait Time": 7.0, "Service": 7.0, "Studyability": 8.0, "Exceptional?": 10.0, "Proximity to other things": 7.0}, "strengths": ["Ambiance", "Exceptional?", "Coffee Taste"], "weaknesses": ["Parking"], "bestFor": ["serious coffee drinkers", "vibe-seekers", "remote work / studying"], "notIdealFor": ["drivers needing easy parking"], "awards": ["Best Personality"], "report": "The Living Room Coffeehouse lands as a S-Tier destination, ranked #8 of 54 this edition, operating as a full sit-down caf\u00e9 in La Jolla, CA. The draw here is strong ambiance (10/10), an exceptional, memorable factor (10/10), and genuinely excellent coffee (9.5/10 taste). The tradeoff is tricky parking. This edition's hardware: Best Personality. Best for serious coffee drinkers, vibe-seekers, and remote work / studying. Less ideal for drivers needing easy parking.", "recommendations": [["Bird Rock Coffee", 0.847], ["Vinam Cafe", 0.704], ["Cafe Alessie", 0.573]]}, {"name": "Vinam Cafe", "venueType": "Cafe", "city": "El Cajon", "lat": 32.79, "lon": -116.96, "tier": "S", "balanced": 7.45, "balancedRank": 9, "aj": 386.0, "ajRank": 8, "consistency": 7.75, "signature": 8.56, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 9.0, "Parking": 3.0, "Milk Balance": 9.0, "Ambiance": 9.0, "Menu Variety": 8.0, "Price": 7.0, "Wait Time": 6.0, "Service": 10.0, "Studyability": 10.0, "Exceptional?": 5.0, "Proximity to other things": 6.0}, "strengths": ["Service", "Studyability", "Coffee Taste"], "weaknesses": ["Parking", "Exceptional?", "Wait Time"], "bestFor": ["serious coffee drinkers", "remote work / studying"], "notIdealFor": ["drivers needing easy parking", "anyone in a hurry"], "awards": [], "report": "Vinam Cafe lands as a S-Tier destination, ranked #9 of 54 this edition, operating as a full sit-down caf\u00e9 in El Cajon, CA. The draw here is standout service (10/10), genuine work/study comfort, and genuinely excellent coffee (9/10 taste). The tradeoff is tricky parking, nothing that particularly stands out, and a slower wait. Best for serious coffee drinkers and remote work / studying. Less ideal for drivers needing easy parking and anyone in a hurry.", "recommendations": [["Bird Rock Coffee", 0.719], ["The Living Room Coffeehouse", 0.704], ["6 Grados", 0.608]]}, {"name": "Common Grounds Coffee", "venueType": "Cafe", "city": "Kearney Mesa", "lat": 32.83, "lon": -117.14, "tier": "S", "balanced": 7.45, "balancedRank": 9, "aj": 369.0, "ajRank": 9, "consistency": 7.19, "signature": 8.56, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 9.0, "Parking": 5.0, "Milk Balance": 8.0, "Ambiance": 10.0, "Menu Variety": 8.0, "Price": 8.0, "Wait Time": 8.0, "Service": 8.0, "Studyability": 10.0, "Exceptional?": 0.0, "Proximity to other things": 8.0}, "strengths": ["Ambiance", "Studyability", "Coffee Taste"], "weaknesses": ["Exceptional?", "Parking"], "bestFor": ["serious coffee drinkers", "vibe-seekers", "remote work / studying"], "notIdealFor": ["drivers needing easy parking"], "awards": ["Remote Work Champion"], "report": "Common Grounds Coffee lands as a S-Tier destination, ranked #10 of 54 this edition, operating as a full sit-down caf\u00e9 in Kearney Mesa, CA. The draw here is strong ambiance (10/10), genuine work/study comfort, and genuinely excellent coffee (9/10 taste). The tradeoff is nothing that particularly stands out and tricky parking. This edition's hardware: Remote Work Champion. Best for serious coffee drinkers, vibe-seekers, and remote work / studying. Less ideal for drivers needing easy parking.", "recommendations": [["The Grounds Coffee Bar", 0.869], ["Inkafe", 0.661], ["Vinam Cafe", 0.596]]}, {"name": "Lovesong Coffee", "venueType": "Cafe", "city": "North Park", "lat": 32.74, "lon": -117.13, "tier": "S", "balanced": 7.23, "balancedRank": 11, "aj": 352.0, "ajRank": 14, "consistency": 6.64, "signature": 8.62, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.5, "Parking": 5.0, "Milk Balance": 8.0, "Ambiance": 10.0, "Menu Variety": 10.0, "Price": 3.0, "Wait Time": 10.0, "Service": 10.0, "Studyability": 9.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Ambiance", "Menu Variety", "Wait Time"], "weaknesses": ["Exceptional?", "Price", "Parking"], "bestFor": ["vibe-seekers", "remote work / studying", "groups with varied orders", "grab-and-go convenience"], "notIdealFor": ["drivers needing easy parking", "budget-conscious visits"], "awards": ["Best Menu"], "report": "Lovesong Coffee lands as a S-Tier destination, ranked #11 of 54 this edition, operating as a full sit-down caf\u00e9 in North Park, CA. The draw here is strong ambiance (10/10), a wide-ranging menu, and fast turnaround. The tradeoff is nothing that particularly stands out, a steeper price tag, and tricky parking. This edition's hardware: Best Menu. Best for vibe-seekers, remote work / studying, groups with varied orders, and grab-and-go convenience. Less ideal for drivers needing easy parking and budget-conscious visits.", "recommendations": [["Stir It Up", 0.636], ["Inkafe", 0.627], ["The Grounds Coffee Bar", 0.518]]}, {"name": "Cafe Alessie", "venueType": "Cafe", "city": "Downtown San Diego", "lat": 32.72, "lon": -117.16, "tier": "A", "balanced": 7.18, "balancedRank": 12, "aj": 391.0, "ajRank": 5, "consistency": 7.6, "signature": 8.59, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 9.0, "Parking": 3.0, "Milk Balance": 10.0, "Ambiance": 5.0, "Menu Variety": 8.0, "Price": 5.0, "Wait Time": 6.0, "Service": 10.0, "Studyability": 6.0, "Exceptional?": 10.0, "Proximity to other things": 7.0}, "strengths": ["Milk Balance", "Service", "Exceptional?"], "weaknesses": ["Parking", "Ambiance", "Price"], "bestFor": ["a solid, no-fuss coffee run"], "notIdealFor": ["drivers needing easy parking", "budget-conscious visits"], "awards": [], "report": "Cafe Alessie lands as a A-Tier standout, ranked #12 of 54 this edition, operating as a full sit-down caf\u00e9 in Downtown San Diego, CA. The draw here is expertly balanced milk drinks (10/10), standout service (10/10), and an exceptional, memorable factor (10/10). The tradeoff is tricky parking, underwhelming ambiance, and a steeper price tag. Best for a solid, no-fuss coffee run. Less ideal for drivers needing easy parking and budget-conscious visits.", "recommendations": [["Saigon Coffee", 0.786], ["Bird Rock Coffee", 0.642], ["Rikka Fikka", 0.619]]}, {"name": "Brick 95", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "A", "balanced": 7.18, "balancedRank": 12, "aj": 361.0, "ajRank": 11, "consistency": 7.56, "signature": 8.43, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 9.0, "Parking": 3.0, "Milk Balance": 9.0, "Ambiance": 10.0, "Menu Variety": 5.0, "Price": 8.0, "Wait Time": 10.0, "Service": 9.0, "Studyability": 6.0, "Exceptional?": 5.0, "Proximity to other things": 5.0}, "strengths": ["Ambiance", "Wait Time", "Coffee Taste"], "weaknesses": ["Parking", "Menu Variety", "Exceptional?"], "bestFor": ["serious coffee drinkers", "vibe-seekers", "grab-and-go convenience"], "notIdealFor": ["drivers needing easy parking", "picky or adventurous orderers"], "awards": [], "report": "Brick 95 lands as a A-Tier standout, ranked #13 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is strong ambiance (10/10), fast turnaround, and genuinely excellent coffee (9/10 taste). The tradeoff is tricky parking, a narrow menu, and nothing that particularly stands out. Best for serious coffee drinkers, vibe-seekers, and grab-and-go convenience. Less ideal for drivers needing easy parking and picky or adventurous orderers.", "recommendations": [["Muri Coffee", 0.583], ["The Living Room Coffeehouse", 0.567], ["Vinam Cafe", 0.466]]}, {"name": "Stir It Up", "venueType": "Cafe", "city": "Spring Valley", "lat": 32.74, "lon": -116.99, "tier": "A", "balanced": 7.14, "balancedRank": 14, "aj": 342.0, "ajRank": 16, "consistency": 6.81, "signature": 8.4, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.5, "Parking": 8.0, "Milk Balance": 9.0, "Ambiance": 10.0, "Menu Variety": 10.0, "Price": 5.0, "Wait Time": 9.0, "Service": 9.0, "Studyability": 7.0, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Ambiance", "Menu Variety", "Milk Balance"], "weaknesses": ["Exceptional?", "Proximity to other things", "Price"], "bestFor": ["vibe-seekers", "remote work / studying", "groups with varied orders"], "notIdealFor": ["budget-conscious visits"], "awards": ["Hidden Gem"], "report": "Stir It Up lands as a A-Tier standout, ranked #14 of 54 this edition, operating as a full sit-down caf\u00e9 in Spring Valley, CA. The draw here is strong ambiance (10/10), a wide-ranging menu, and expertly balanced milk drinks (9/10). The tradeoff is nothing that particularly stands out, a location that's out of the way, and a steeper price tag. This edition's hardware: Hidden Gem. Best for vibe-seekers, remote work / studying, and groups with varied orders. Less ideal for budget-conscious visits.", "recommendations": [["Compa Coffee Roasters", 0.668], ["Lovesong Coffee", 0.636], ["6 Grados", 0.603]]}, {"name": "The Grounds Coffee Bar", "venueType": "Cafe", "city": "Mission Bay", "lat": 32.77, "lon": -117.22, "tier": "A", "balanced": 7.0, "balancedRank": 15, "aj": 343.0, "ajRank": 15, "consistency": 7.47, "signature": 8.0, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.0, "Parking": 6.0, "Milk Balance": 7.0, "Ambiance": 9.0, "Menu Variety": 8.0, "Price": 7.0, "Wait Time": 7.0, "Service": 9.0, "Studyability": 9.0, "Exceptional?": 0.0, "Proximity to other things": 7.0}, "strengths": ["Ambiance", "Service", "Studyability"], "weaknesses": ["Exceptional?", "Parking"], "bestFor": ["vibe-seekers", "remote work / studying"], "notIdealFor": ["drivers needing easy parking"], "awards": [], "report": "The Grounds Coffee Bar lands as a A-Tier standout, ranked #15 of 54 this edition, operating as a full sit-down caf\u00e9 in Mission Bay, CA. The draw here is strong ambiance (9/10), standout service (9/10), and genuine work/study comfort. The tradeoff is nothing that particularly stands out and tricky parking. Best for vibe-seekers and remote work / studying. Less ideal for drivers needing easy parking.", "recommendations": [["Common Grounds Coffee", 0.869], ["Brick and Bell Cafe", 0.648], ["Vinam Cafe", 0.57]]}, {"name": "The Lean Bean", "venueType": "Drive-Thru", "city": "Santee", "lat": 32.84, "lon": -116.98, "tier": "A", "balanced": 7.0, "balancedRank": 15, "aj": 308.0, "ajRank": 33, "consistency": 6.91, "signature": 8.5, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 7.0, "Parking": 10.0, "Milk Balance": 7.0, "Ambiance": 5.0, "Menu Variety": 8.0, "Price": 8.0, "Wait Time": 10.0, "Service": 10.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 5.0}, "strengths": ["Parking", "Wait Time", "Service"], "weaknesses": ["Exceptional?", "Ambiance", "Proximity to other things"], "bestFor": ["quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["settling in to work or study"], "awards": [], "report": "The Lean Bean lands as a A-Tier standout, ranked #16 of 54 this edition, operating as a drive-thru built for speed over lingering in Santee, CA. The draw here is easy parking, fast turnaround, and standout service (10/10). The tradeoff is nothing that particularly stands out, underwhelming ambiance, and a location that's out of the way. Best for quick car-friendly stops and grab-and-go convenience. Less ideal for settling in to work or study.", "recommendations": [["Cappuccino Cottage", 0.772], ["Cafe Bella", 0.717], ["Hobcoffee Sabre Springs", 0.504]]}, {"name": "Coffee N Talk", "venueType": "Cafe", "city": "Santee", "lat": 32.84, "lon": -116.98, "tier": "A", "balanced": 6.95, "balancedRank": 17, "aj": 336.0, "ajRank": 18, "consistency": 7.47, "signature": 7.72, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.5, "Parking": 9.0, "Milk Balance": 8.0, "Ambiance": 8.0, "Menu Variety": 8.0, "Price": 7.0, "Wait Time": 7.0, "Service": 8.0, "Studyability": 8.0, "Exceptional?": 0.0, "Proximity to other things": 5.0}, "strengths": ["Parking", "Coffee Taste", "Milk Balance"], "weaknesses": ["Exceptional?", "Proximity to other things"], "bestFor": ["serious coffee drinkers", "remote work / studying", "quick car-friendly stops"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Coffee N Talk lands as a A-Tier standout, ranked #17 of 54 this edition, operating as a full sit-down caf\u00e9 in Santee, CA. The draw here is easy parking, genuinely excellent coffee (8.5/10 taste), and expertly balanced milk drinks (8/10). The tradeoff is nothing that particularly stands out and a location that's out of the way. Best for serious coffee drinkers, remote work / studying, and quick car-friendly stops. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Caffeine Queens", 0.704], ["Mostra Coffee", 0.565], ["Stir It Up", 0.543]]}, {"name": "Cuppa Cuppa coffee", "venueType": "Cafe", "city": "La Mesa", "lat": 32.77, "lon": -117.02, "tier": "A", "balanced": 6.95, "balancedRank": 17, "aj": 324.0, "ajRank": 23, "consistency": 7.46, "signature": 7.72, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.5, "Parking": 8.0, "Milk Balance": 9.0, "Ambiance": 7.0, "Menu Variety": 8.0, "Price": 7.0, "Wait Time": 7.0, "Service": 8.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 7.0}, "strengths": ["Milk Balance", "Coffee Taste", "Parking"], "weaknesses": ["Exceptional?"], "bestFor": ["serious coffee drinkers", "quick car-friendly stops"], "notIdealFor": ["settling in to work or study"], "awards": [], "report": "Cuppa Cuppa coffee lands as a A-Tier standout, ranked #18 of 54 this edition, operating as a full sit-down caf\u00e9 in La Mesa, CA. The draw here is expertly balanced milk drinks (9/10), genuinely excellent coffee (8.5/10 taste), and easy parking. The tradeoff is nothing that particularly stands out. Best for serious coffee drinkers and quick car-friendly stops. Less ideal for settling in to work or study.", "recommendations": [["Dutch Bros", 0.59], ["Cafe Bella", 0.492], ["Coffee N Talk", 0.488]]}, {"name": "Muri Coffee", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "A", "balanced": 6.91, "balancedRank": 19, "aj": 338.0, "ajRank": 17, "consistency": 7.12, "signature": 8.12, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 7.0, "Parking": 4.0, "Milk Balance": 9.0, "Ambiance": 9.0, "Menu Variety": 6.0, "Price": 10.0, "Wait Time": 8.0, "Service": 9.0, "Studyability": 8.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Price", "Milk Balance", "Ambiance"], "weaknesses": ["Exceptional?", "Parking", "Menu Variety"], "bestFor": ["vibe-seekers", "remote work / studying"], "notIdealFor": ["drivers needing easy parking", "picky or adventurous orderers"], "awards": [], "report": "Muri Coffee lands as a A-Tier standout, ranked #19 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is strong value for the price, expertly balanced milk drinks (9/10), and strong ambiance (9/10). The tradeoff is nothing that particularly stands out, tricky parking, and a narrow menu. Best for vibe-seekers and remote work / studying. Less ideal for drivers needing easy parking and picky or adventurous orderers.", "recommendations": [["Brick 95", 0.583], ["Common Grounds Coffee", 0.559], ["The Grounds Coffee Bar", 0.47]]}, {"name": "Dutch Bros", "venueType": "Drive-Thru", "city": "El Cajon", "lat": 32.79, "lon": -116.96, "tier": "A", "balanced": 6.85, "balancedRank": 20, "aj": 321.0, "ajRank": 24, "consistency": 6.89, "signature": 8.09, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.5, "Parking": 10.0, "Milk Balance": 8.0, "Ambiance": 8.0, "Menu Variety": 9.0, "Price": 6.0, "Wait Time": 3.0, "Service": 9.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 7.0}, "strengths": ["Parking", "Menu Variety", "Service"], "weaknesses": ["Exceptional?", "Wait Time", "Price"], "bestFor": ["groups with varied orders", "quick car-friendly stops"], "notIdealFor": ["settling in to work or study", "anyone in a hurry", "budget-conscious visits"], "awards": [], "report": "Dutch Bros lands as a A-Tier standout, ranked #20 of 54 this edition, operating as a drive-thru built for speed over lingering in El Cajon, CA. The draw here is easy parking, a wide-ranging menu, and standout service (9/10). The tradeoff is nothing that particularly stands out, a slower wait, and a steeper price tag. Best for groups with varied orders and quick car-friendly stops. Less ideal for settling in to work or study, anyone in a hurry, and budget-conscious visits.", "recommendations": [["Cuppa Cuppa coffee", 0.59], ["Coffee N Talk", 0.518], ["Cafe Matinal", 0.483]]}, {"name": "Garden farms market", "venueType": "Market", "city": "Lakeside", "lat": 32.86, "lon": -116.92, "tier": "A", "balanced": 6.85, "balancedRank": 20, "aj": 292.0, "ajRank": 41, "consistency": 6.38, "signature": 8.43, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 7.5, "Parking": 10.0, "Milk Balance": 10.0, "Ambiance": 7.0, "Menu Variety": 3.0, "Price": 10.0, "Wait Time": 10.0, "Service": 8.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Parking", "Milk Balance", "Price"], "weaknesses": ["Exceptional?", "Menu Variety", "Proximity to other things"], "bestFor": ["quick car-friendly stops"], "notIdealFor": ["settling in to work or study", "picky or adventurous orderers"], "awards": [], "report": "Garden farms market lands as a A-Tier standout, ranked #21 of 54 this edition, operating as a market-and-caf\u00e9 hybrid in Lakeside, CA. The draw here is easy parking, expertly balanced milk drinks (10/10), and strong value for the price. The tradeoff is nothing that particularly stands out, a narrow menu, and a location that's out of the way. Best for quick car-friendly stops. Less ideal for settling in to work or study and picky or adventurous orderers.", "recommendations": [["Cappuccino Cottage", 0.612], ["Tyne Coffee", 0.606], ["Simple Coffee House", 0.482]]}, {"name": "MNGO cafe", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "A", "balanced": 6.82, "balancedRank": 22, "aj": 303.0, "ajRank": 35, "consistency": 6.88, "signature": 8.07, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 4.0, "Parking": 9.0, "Milk Balance": 9.0, "Ambiance": 9.0, "Menu Variety": 9.0, "Price": 4.0, "Wait Time": 6.0, "Service": 9.0, "Studyability": 10.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Studyability", "Parking", "Milk Balance"], "weaknesses": ["Exceptional?", "Coffee Taste", "Price"], "bestFor": ["remote work / studying", "quick car-friendly stops"], "notIdealFor": ["budget-conscious visits"], "awards": [], "report": "MNGO cafe lands as a A-Tier standout, ranked #22 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is genuine work/study comfort, easy parking, and expertly balanced milk drinks (9/10). The tradeoff is nothing that particularly stands out, coffee that undershoots the competition, and a steeper price tag. Best for remote work / studying and quick car-friendly stops. Less ideal for budget-conscious visits.", "recommendations": [["Lakeside Social", 0.619], ["ESSNTL coffee", 0.596], ["Em Coffee", 0.538]]}, {"name": "Shaghf Cafe", "venueType": "Cafe", "city": "El Cajon", "lat": 32.79, "lon": -116.96, "tier": "A", "balanced": 6.82, "balancedRank": 22, "aj": 319.0, "ajRank": 28, "consistency": 7.14, "signature": 8.07, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 7.0, "Parking": 9.0, "Milk Balance": 8.0, "Ambiance": 8.0, "Menu Variety": 10.0, "Price": 8.0, "Wait Time": 9.0, "Service": 4.0, "Studyability": 7.0, "Exceptional?": 0.0, "Proximity to other things": 5.0}, "strengths": ["Menu Variety", "Parking", "Wait Time"], "weaknesses": ["Exceptional?", "Service", "Proximity to other things"], "bestFor": ["remote work / studying", "groups with varied orders", "quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Shaghf Cafe lands as a A-Tier standout, ranked #23 of 54 this edition, operating as a full sit-down caf\u00e9 in El Cajon, CA. The draw here is a wide-ranging menu, easy parking, and fast turnaround. The tradeoff is nothing that particularly stands out, hit-or-miss service, and a location that's out of the way. Best for remote work / studying, groups with varied orders, quick car-friendly stops, and grab-and-go convenience. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Mostra Coffee", 0.624], ["Caffeine Queens", 0.502], ["Starbucks (Lakeside)", 0.456]]}, {"name": "Compa Coffee Roasters", "venueType": "Cafe", "city": "Rancho Bernardo", "lat": 33.03, "lon": -117.08, "tier": "A", "balanced": 6.73, "balancedRank": 24, "aj": 334.0, "ajRank": 19, "consistency": 7.1, "signature": 8.03, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 9.0, "Parking": 6.0, "Milk Balance": 10.0, "Ambiance": 8.0, "Menu Variety": 8.0, "Price": 7.0, "Wait Time": 9.0, "Service": 7.0, "Studyability": 7.0, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Milk Balance", "Coffee Taste", "Wait Time"], "weaknesses": ["Exceptional?", "Proximity to other things", "Parking"], "bestFor": ["serious coffee drinkers", "remote work / studying", "grab-and-go convenience"], "notIdealFor": ["drivers needing easy parking"], "awards": ["Best Specialty Roaster"], "report": "Compa Coffee Roasters lands as a A-Tier standout, ranked #24 of 54 this edition, operating as a full sit-down caf\u00e9 in Rancho Bernardo, CA. The draw here is expertly balanced milk drinks (10/10), genuinely excellent coffee (9/10 taste), and fast turnaround. The tradeoff is nothing that particularly stands out, a location that's out of the way, and tricky parking. This edition's hardware: Best Specialty Roaster. Best for serious coffee drinkers, remote work / studying, and grab-and-go convenience. Less ideal for drivers needing easy parking.", "recommendations": [["Mostra Coffee", 0.689], ["Stir It Up", 0.668], ["Garden farms market", 0.456]]}, {"name": "Lakeside Social", "venueType": "Cafe", "city": "Lakeside", "lat": 32.86, "lon": -116.92, "tier": "A", "balanced": 6.73, "balancedRank": 24, "aj": 320.0, "ajRank": 26, "consistency": 6.65, "signature": 8.2, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 6.0, "Parking": 8.0, "Milk Balance": 9.0, "Ambiance": 10.0, "Menu Variety": 9.0, "Price": 7.0, "Wait Time": 3.0, "Service": 10.0, "Studyability": 9.0, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Ambiance", "Service", "Milk Balance"], "weaknesses": ["Exceptional?", "Wait Time", "Proximity to other things"], "bestFor": ["vibe-seekers", "remote work / studying"], "notIdealFor": ["anyone in a hurry"], "awards": [], "report": "Lakeside Social lands as a A-Tier standout, ranked #25 of 54 this edition, operating as a full sit-down caf\u00e9 in Lakeside, CA. The draw here is strong ambiance (10/10), standout service (10/10), and expertly balanced milk drinks (9/10). The tradeoff is nothing that particularly stands out, a slower wait, and a location that's out of the way. Best for vibe-seekers and remote work / studying. Less ideal for anyone in a hurry.", "recommendations": [["6 Grados", 0.692], ["MNGO cafe", 0.619], ["Dutch Bros", 0.478]]}, {"name": "The Keep Coffee", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "A", "balanced": 6.73, "balancedRank": 24, "aj": 321.0, "ajRank": 24, "consistency": 7.0, "signature": 8.03, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 9.0, "Parking": 7.0, "Milk Balance": 9.0, "Ambiance": 8.0, "Menu Variety": 4.0, "Price": 4.0, "Wait Time": 10.0, "Service": 9.0, "Studyability": 8.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Wait Time", "Coffee Taste", "Milk Balance"], "weaknesses": ["Exceptional?", "Menu Variety", "Price"], "bestFor": ["serious coffee drinkers", "remote work / studying", "grab-and-go convenience"], "notIdealFor": ["picky or adventurous orderers", "budget-conscious visits"], "awards": [], "report": "The Keep Coffee lands as a A-Tier standout, ranked #26 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is fast turnaround, genuinely excellent coffee (9/10 taste), and expertly balanced milk drinks (9/10). The tradeoff is nothing that particularly stands out, a narrow menu, and a steeper price tag. Best for serious coffee drinkers, remote work / studying, and grab-and-go convenience. Less ideal for picky or adventurous orderers and budget-conscious visits.", "recommendations": [["Tyne Coffee", 0.522], ["Brick 95", 0.395], ["Lovesong Coffee", 0.38]]}, {"name": "Saigon Coffee", "venueType": "Cafe", "city": "North Park", "lat": 32.74, "lon": -117.13, "tier": "A", "balanced": 6.64, "balancedRank": 27, "aj": 357.0, "ajRank": 13, "consistency": 7.02, "signature": 8.15, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 9.0, "Parking": 2.0, "Milk Balance": 9.0, "Ambiance": 4.0, "Menu Variety": 7.0, "Price": 2.0, "Wait Time": 10.0, "Service": 8.0, "Studyability": 5.0, "Exceptional?": 10.0, "Proximity to other things": 7.0}, "strengths": ["Wait Time", "Exceptional?", "Coffee Taste"], "weaknesses": ["Parking", "Price", "Ambiance"], "bestFor": ["serious coffee drinkers", "grab-and-go convenience"], "notIdealFor": ["drivers needing easy parking", "budget-conscious visits"], "awards": [], "report": "Saigon Coffee lands as a A-Tier standout, ranked #27 of 54 this edition, operating as a full sit-down caf\u00e9 in North Park, CA. The draw here is fast turnaround, an exceptional, memorable factor (10/10), and genuinely excellent coffee (9/10 taste). The tradeoff is tricky parking, a steeper price tag, and underwhelming ambiance. Best for serious coffee drinkers and grab-and-go convenience. Less ideal for drivers needing easy parking and budget-conscious visits.", "recommendations": [["Cafe Alessie", 0.786], ["Parakeet Cafe", 0.536], ["The Living Room Coffeehouse", 0.447]]}, {"name": "Mostra Coffee", "venueType": "Cafe", "city": "Torrey Pines", "lat": 32.9, "lon": -117.25, "tier": "A", "balanced": 6.64, "balancedRank": 27, "aj": 330.0, "ajRank": 21, "consistency": 7.2, "signature": 7.82, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 9.0, "Parking": 8.0, "Milk Balance": 10.0, "Ambiance": 8.0, "Menu Variety": 8.0, "Price": 8.0, "Wait Time": 6.0, "Service": 5.0, "Studyability": 7.0, "Exceptional?": 0.0, "Proximity to other things": 4.0}, "strengths": ["Milk Balance", "Coffee Taste", "Parking"], "weaknesses": ["Exceptional?", "Proximity to other things", "Service"], "bestFor": ["serious coffee drinkers", "remote work / studying", "quick car-friendly stops"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Mostra Coffee lands as a A-Tier standout, ranked #28 of 54 this edition, operating as a full sit-down caf\u00e9 in Torrey Pines, CA. The draw here is expertly balanced milk drinks (10/10), genuinely excellent coffee (9/10 taste), and easy parking. The tradeoff is nothing that particularly stands out, a location that's out of the way, and hit-or-miss service. Best for serious coffee drinkers, remote work / studying, and quick car-friendly stops. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Compa Coffee Roasters", 0.689], ["Shaghf Cafe", 0.624], ["Coffee N Talk", 0.565]]}, {"name": "Lightbulb coffee", "venueType": "Cafe", "city": "La Mesa", "lat": 32.77, "lon": -117.02, "tier": "A", "balanced": 6.64, "balancedRank": 27, "aj": 313.0, "ajRank": 31, "consistency": 7.16, "signature": 7.98, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.0, "Parking": 8.0, "Milk Balance": 7.0, "Ambiance": 10.0, "Menu Variety": 8.0, "Price": 4.0, "Wait Time": 6.0, "Service": 6.0, "Studyability": 10.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Ambiance", "Studyability", "Coffee Taste"], "weaknesses": ["Exceptional?", "Price", "Wait Time"], "bestFor": ["serious coffee drinkers", "vibe-seekers", "remote work / studying"], "notIdealFor": ["anyone in a hurry", "budget-conscious visits"], "awards": [], "report": "Lightbulb coffee lands as a A-Tier standout, ranked #29 of 54 this edition, operating as a full sit-down caf\u00e9 in La Mesa, CA. The draw here is strong ambiance (10/10), genuine work/study comfort, and genuinely excellent coffee (8/10 taste). The tradeoff is nothing that particularly stands out, a steeper price tag, and a slower wait. Best for serious coffee drinkers, vibe-seekers, and remote work / studying. Less ideal for anyone in a hurry and budget-conscious visits.", "recommendations": [["Em Coffee", 0.552], ["MNGO cafe", 0.439], ["The Grounds Coffee Bar", 0.399]]}, {"name": "ESSNTL coffee", "venueType": "Cafe", "city": "La Mesa", "lat": 32.77, "lon": -117.02, "tier": "A", "balanced": 6.64, "balancedRank": 27, "aj": 326.0, "ajRank": 22, "consistency": 7.31, "signature": 7.98, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 7.0, "Parking": 6.0, "Milk Balance": 9.0, "Ambiance": 6.0, "Menu Variety": 9.0, "Price": 5.0, "Wait Time": 7.0, "Service": 8.0, "Studyability": 10.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Studyability", "Milk Balance", "Menu Variety"], "weaknesses": ["Exceptional?", "Price", "Parking"], "bestFor": ["remote work / studying", "groups with varied orders"], "notIdealFor": ["drivers needing easy parking", "budget-conscious visits"], "awards": [], "report": "ESSNTL coffee lands as a A-Tier standout, ranked #30 of 54 this edition, operating as a full sit-down caf\u00e9 in La Mesa, CA. The draw here is genuine work/study comfort, expertly balanced milk drinks (9/10), and a wide-ranging menu. The tradeoff is nothing that particularly stands out, a steeper price tag, and tricky parking. Best for remote work / studying and groups with varied orders. Less ideal for drivers needing easy parking and budget-conscious visits.", "recommendations": [["MNGO cafe", 0.596], ["Spill the Beans", 0.51], ["Cafe Bella", 0.409]]}, {"name": "Caffeine Queens", "venueType": "Drive-Thru", "city": "Lakeside", "lat": 32.86, "lon": -116.92, "tier": "B", "balanced": 6.6, "balancedRank": 31, "aj": 302.0, "ajRank": 36, "consistency": 6.97, "signature": 7.96, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 9.0, "Parking": 10.0, "Milk Balance": 6.0, "Ambiance": 7.0, "Menu Variety": 9.0, "Price": 8.0, "Wait Time": 7.0, "Service": 7.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Parking", "Coffee Taste", "Menu Variety"], "weaknesses": ["Exceptional?", "Proximity to other things", "Milk Balance"], "bestFor": ["serious coffee drinkers", "groups with varied orders", "quick car-friendly stops"], "notIdealFor": ["settling in to work or study"], "awards": [], "report": "Caffeine Queens lands as a solid B-Tier regular, ranked #31 of 54 this edition, operating as a drive-thru built for speed over lingering in Lakeside, CA. The draw here is easy parking, genuinely excellent coffee (9/10 taste), and a wide-ranging menu. The tradeoff is nothing that particularly stands out, a location that's out of the way, and inconsistent milk drinks. Best for serious coffee drinkers, groups with varied orders, and quick car-friendly stops. Less ideal for settling in to work or study.", "recommendations": [["Coffee N Talk", 0.704], ["Cafe Adesso", 0.566], ["Cappuccino Cottage", 0.544]]}, {"name": "Santee Coffee Corner", "venueType": "Cafe", "city": "Santee", "lat": 32.84, "lon": -116.98, "tier": "B", "balanced": 6.5, "balancedRank": 32, "aj": 318.0, "ajRank": 29, "consistency": 7.18, "signature": 7.92, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 7.5, "Parking": 6.0, "Milk Balance": 5.0, "Ambiance": 7.0, "Menu Variety": 10.0, "Price": 6.0, "Wait Time": 8.0, "Service": 9.0, "Studyability": 9.0, "Exceptional?": 0.0, "Proximity to other things": 4.0}, "strengths": ["Menu Variety", "Service", "Studyability"], "weaknesses": ["Exceptional?", "Proximity to other things", "Milk Balance"], "bestFor": ["remote work / studying", "groups with varied orders"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Santee Coffee Corner lands as a solid B-Tier regular, ranked #32 of 54 this edition, operating as a full sit-down caf\u00e9 in Santee, CA. The draw here is a wide-ranging menu, standout service (9/10), and genuine work/study comfort. The tradeoff is nothing that particularly stands out, a location that's out of the way, and inconsistent milk drinks. Best for remote work / studying and groups with varied orders. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Spill the Beans", 0.77], ["Kaffee Meister (Santee)", 0.675], ["Hobcoffee Sabre Springs", 0.526]]}, {"name": "Tyne Coffee", "venueType": "Cafe", "city": "El Cajon", "lat": 32.79, "lon": -116.96, "tier": "B", "balanced": 6.45, "balancedRank": 33, "aj": 306.0, "ajRank": 34, "consistency": 7.3, "signature": 7.56, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 8.0, "Parking": 8.0, "Milk Balance": 9.0, "Ambiance": 7.0, "Menu Variety": 3.0, "Price": 7.0, "Wait Time": 7.0, "Service": 7.0, "Studyability": 9.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Milk Balance", "Studyability", "Coffee Taste"], "weaknesses": ["Exceptional?", "Menu Variety", "Proximity to other things"], "bestFor": ["serious coffee drinkers", "remote work / studying"], "notIdealFor": ["picky or adventurous orderers"], "awards": [], "report": "Tyne Coffee lands as a solid B-Tier regular, ranked #33 of 54 this edition, operating as a full sit-down caf\u00e9 in El Cajon, CA. The draw here is expertly balanced milk drinks (9/10), genuine work/study comfort, and genuinely excellent coffee (8/10 taste). The tradeoff is nothing that particularly stands out, a narrow menu, and a location that's out of the way. Best for serious coffee drinkers and remote work / studying. Less ideal for picky or adventurous orderers.", "recommendations": [["Simple Coffee House", 0.639], ["Garden farms market", 0.606], ["The Keep Coffee", 0.522]]}, {"name": "Kaffee Meister (Santee)", "venueType": "Cafe", "city": "Santee", "lat": 32.84, "lon": -116.98, "tier": "B", "balanced": 6.41, "balancedRank": 34, "aj": 299.0, "ajRank": 38, "consistency": 6.65, "signature": 8.04, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 8.5, "Parking": 8.0, "Milk Balance": 2.0, "Ambiance": 10.0, "Menu Variety": 7.0, "Price": 6.0, "Wait Time": 7.0, "Service": 9.0, "Studyability": 10.0, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Ambiance", "Studyability", "Service"], "weaknesses": ["Exceptional?", "Milk Balance", "Proximity to other things"], "bestFor": ["vibe-seekers", "remote work / studying"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Kaffee Meister (Santee) lands as a solid B-Tier regular, ranked #34 of 54 this edition, operating as a full sit-down caf\u00e9 in Santee, CA. The draw here is strong ambiance (10/10), genuine work/study comfort, and standout service (9/10). The tradeoff is nothing that particularly stands out, inconsistent milk drinks, and a location that's out of the way. Best for vibe-seekers and remote work / studying. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Kaffee Meister (Lakeside)", 0.698], ["Santee Coffee Corner", 0.675], ["Cafe Adesso", 0.601]]}, {"name": "Brick and Bell Cafe", "venueType": "Cafe", "city": "La Jolla", "lat": 32.84, "lon": -117.27, "tier": "B", "balanced": 6.36, "balancedRank": 35, "aj": 320.0, "ajRank": 26, "consistency": 7.5, "signature": 7.35, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 7.0, "Parking": 4.0, "Milk Balance": 6.0, "Ambiance": 8.0, "Menu Variety": 9.0, "Price": 7.0, "Wait Time": 6.0, "Service": 7.0, "Studyability": 8.0, "Exceptional?": 0.0, "Proximity to other things": 8.0}, "strengths": ["Menu Variety", "Ambiance", "Studyability"], "weaknesses": ["Exceptional?", "Parking", "Milk Balance"], "bestFor": ["vibe-seekers", "remote work / studying", "groups with varied orders"], "notIdealFor": ["drivers needing easy parking"], "awards": [], "report": "Brick and Bell Cafe lands as a solid B-Tier regular, ranked #35 of 54 this edition, operating as a full sit-down caf\u00e9 in La Jolla, CA. The draw here is a wide-ranging menu, strong ambiance (8/10), and genuine work/study comfort. The tradeoff is nothing that particularly stands out, tricky parking, and inconsistent milk drinks. Best for vibe-seekers, remote work / studying, and groups with varied orders. Less ideal for drivers needing easy parking.", "recommendations": [["The Grounds Coffee Bar", 0.648], ["Common Grounds Coffee", 0.569], ["Chance's Coffee", 0.559]]}, {"name": "Cappuccino Cottage", "venueType": "Drive-Thru", "city": "Poway", "lat": 32.96, "lon": -117.04, "tier": "B", "balanced": 6.3, "balancedRank": 36, "aj": 270.0, "ajRank": 43, "consistency": 7.02, "signature": 7.65, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 6.0, "Parking": 10.0, "Milk Balance": 7.0, "Ambiance": 5.0, "Menu Variety": 7.0, "Price": 8.0, "Wait Time": 9.0, "Service": 8.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Parking", "Wait Time", "Price"], "weaknesses": ["Exceptional?", "Proximity to other things", "Ambiance"], "bestFor": ["quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["settling in to work or study"], "awards": [], "report": "Cappuccino Cottage lands as a solid B-Tier regular, ranked #36 of 54 this edition, operating as a drive-thru built for speed over lingering in Poway, CA. The draw here is easy parking, fast turnaround, and strong value for the price. The tradeoff is nothing that particularly stands out, a location that's out of the way, and underwhelming ambiance. Best for quick car-friendly stops and grab-and-go convenience. Less ideal for settling in to work or study.", "recommendations": [["The Lean Bean", 0.772], ["Cafe Adesso", 0.629], ["Garden farms market", 0.612]]}, {"name": "Hobcoffee Sabre Springs", "venueType": "Cafe", "city": "Poway", "lat": 32.96, "lon": -117.04, "tier": "B", "balanced": 6.27, "balancedRank": 37, "aj": 311.0, "ajRank": 32, "consistency": 7.24, "signature": 7.64, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 6.0, "Parking": 4.0, "Milk Balance": 6.0, "Ambiance": 6.0, "Menu Variety": 9.0, "Price": 9.0, "Wait Time": 9.0, "Service": 9.0, "Studyability": 6.0, "Exceptional?": 0.0, "Proximity to other things": 5.0}, "strengths": ["Menu Variety", "Price", "Wait Time"], "weaknesses": ["Exceptional?", "Parking", "Proximity to other things"], "bestFor": ["groups with varied orders", "grab-and-go convenience"], "notIdealFor": ["drivers needing easy parking"], "awards": [], "report": "Hobcoffee Sabre Springs lands as a solid B-Tier regular, ranked #37 of 54 this edition, operating as a full sit-down caf\u00e9 in Poway, CA. The draw here is a wide-ranging menu, strong value for the price, and fast turnaround. The tradeoff is nothing that particularly stands out, tricky parking, and a location that's out of the way. Best for groups with varied orders and grab-and-go convenience. Less ideal for drivers needing easy parking.", "recommendations": [["Santee Coffee Corner", 0.526], ["The Lean Bean", 0.504], ["Chance's Coffee", 0.431]]}, {"name": "Chance's Coffee", "venueType": "Cafe", "city": "North Park", "lat": 32.74, "lon": -117.13, "tier": "B", "balanced": 6.18, "balancedRank": 38, "aj": 315.0, "ajRank": 30, "consistency": 7.4, "signature": 7.26, "cluster": "The Dependable All-Rounder", "categories": {"Coffee Taste": 8.0, "Parking": 3.0, "Milk Balance": 6.0, "Ambiance": 8.0, "Menu Variety": 7.0, "Price": 6.0, "Wait Time": 8.0, "Service": 9.0, "Studyability": 6.0, "Exceptional?": 0.0, "Proximity to other things": 7.0}, "strengths": ["Service", "Coffee Taste", "Ambiance"], "weaknesses": ["Exceptional?", "Parking", "Milk Balance"], "bestFor": ["serious coffee drinkers", "vibe-seekers"], "notIdealFor": ["drivers needing easy parking"], "awards": [], "report": "Chance's Coffee lands as a solid B-Tier regular, ranked #38 of 54 this edition, operating as a full sit-down caf\u00e9 in North Park, CA. The draw here is standout service (9/10), genuinely excellent coffee (8/10 taste), and strong ambiance (8/10). The tradeoff is nothing that particularly stands out, tricky parking, and inconsistent milk drinks. Best for serious coffee drinkers and vibe-seekers. Less ideal for drivers needing easy parking.", "recommendations": [["Parakeet Cafe", 0.642], ["Brick and Bell Cafe", 0.559], ["The Grounds Coffee Bar", 0.466]]}, {"name": "Hunters of Hendrix", "venueType": "Cafe", "city": "Miramar", "lat": 32.89, "lon": -117.14, "tier": "B", "balanced": 6.18, "balancedRank": 38, "aj": 296.0, "ajRank": 40, "consistency": 7.36, "signature": 7.26, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 7.0, "Parking": 8.0, "Milk Balance": 8.0, "Ambiance": 7.0, "Menu Variety": 7.0, "Price": 5.0, "Wait Time": 9.0, "Service": 8.0, "Studyability": 3.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Wait Time", "Parking", "Milk Balance"], "weaknesses": ["Exceptional?", "Studyability", "Price"], "bestFor": ["quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["long study sessions", "budget-conscious visits"], "awards": [], "report": "Hunters of Hendrix lands as a solid B-Tier regular, ranked #39 of 54 this edition, operating as a full sit-down caf\u00e9 in Miramar, CA. The draw here is fast turnaround, easy parking, and expertly balanced milk drinks (8/10). The tradeoff is nothing that particularly stands out, not a place to settle in for long, and a steeper price tag. Best for quick car-friendly stops and grab-and-go convenience. Less ideal for long study sessions and budget-conscious visits.", "recommendations": [["Dark Horse Coffee", 0.531], ["Na Tart", 0.477], ["Zumbar Coffee & Tea", 0.472]]}, {"name": "Spill the Beans", "venueType": "Drive-Thru", "city": "Mission Valley", "lat": 32.77, "lon": -117.16, "tier": "B", "balanced": 6.09, "balancedRank": 40, "aj": 298.0, "ajRank": 39, "consistency": 7.34, "signature": 7.54, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 7.0, "Parking": 6.0, "Milk Balance": 5.0, "Ambiance": 5.0, "Menu Variety": 8.0, "Price": 5.0, "Wait Time": 7.0, "Service": 9.0, "Studyability": 10.0, "Exceptional?": 0.0, "Proximity to other things": 5.0}, "strengths": ["Studyability", "Service", "Menu Variety"], "weaknesses": ["Exceptional?", "Milk Balance", "Ambiance"], "bestFor": ["remote work / studying", "groups with varied orders"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Spill the Beans lands as a solid B-Tier regular, ranked #40 of 54 this edition, operating as a drive-thru built for speed over lingering in Mission Valley, CA. The draw here is genuine work/study comfort, standout service (9/10), and a wide-ranging menu. The tradeoff is nothing that particularly stands out, inconsistent milk drinks, and underwhelming ambiance. Best for remote work / studying and groups with varied orders. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Santee Coffee Corner", 0.77], ["Honey Haven", 0.586], ["Kaffee Meister (Santee)", 0.514]]}, {"name": "Cafe Adesso", "venueType": "Drive-Thru", "city": "Alpine", "lat": 32.83, "lon": -116.77, "tier": "B", "balanced": 5.95, "balancedRank": 41, "aj": 259.0, "ajRank": 48, "consistency": 6.98, "signature": 7.39, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 7.5, "Parking": 10.0, "Milk Balance": 6.0, "Ambiance": 7.0, "Menu Variety": 6.0, "Price": 5.0, "Wait Time": 7.0, "Service": 9.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 2.0}, "strengths": ["Parking", "Service", "Coffee Taste"], "weaknesses": ["Exceptional?", "Proximity to other things", "Price"], "bestFor": ["serious coffee drinkers", "quick car-friendly stops"], "notIdealFor": ["settling in to work or study", "budget-conscious visits"], "awards": [], "report": "Cafe Adesso lands as a solid B-Tier regular, ranked #41 of 54 this edition, operating as a drive-thru built for speed over lingering in Alpine, CA. The draw here is easy parking, standout service (9/10), and genuinely excellent coffee (7.5/10 taste). The tradeoff is nothing that particularly stands out, a location that's out of the way, and a steeper price tag. Best for serious coffee drinkers and quick car-friendly stops. Less ideal for settling in to work or study and budget-conscious visits.", "recommendations": [["Cappuccino Cottage", 0.629], ["Kaffee Meister (Santee)", 0.601], ["Caffeine Queens", 0.566]]}, {"name": "Starbucks (Lakeside)", "venueType": "Cafe/Drive Thru", "city": "Lakeside", "lat": 32.86, "lon": -116.92, "tier": "C", "balanced": 5.82, "balancedRank": 42, "aj": 242.0, "ajRank": 50, "consistency": 7.29, "signature": 7.24, "cluster": "Room to Grow", "categories": {"Coffee Taste": 3.0, "Parking": 10.0, "Milk Balance": 6.0, "Ambiance": 8.0, "Menu Variety": 7.0, "Price": 6.0, "Wait Time": 8.0, "Service": 6.0, "Studyability": 6.0, "Exceptional?": 0.0, "Proximity to other things": 4.0}, "strengths": ["Parking", "Ambiance", "Wait Time"], "weaknesses": ["Exceptional?", "Coffee Taste", "Proximity to other things"], "bestFor": ["vibe-seekers", "quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Starbucks (Lakeside) lands as a dependable C-Tier stop, ranked #42 of 54 this edition, operating as a hybrid that offers both a counter and a drive-thru lane in Lakeside, CA. The draw here is easy parking, strong ambiance (8/10), and fast turnaround. The tradeoff is nothing that particularly stands out, coffee that undershoots the competition, and a location that's out of the way. Best for vibe-seekers, quick car-friendly stops, and grab-and-go convenience. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Kini Cafe", 0.615], ["Cappuccino Cottage", 0.61], ["Dark Horse Coffee", 0.563]]}, {"name": "Simple Coffee House", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "C", "balanced": 5.73, "balancedRank": 43, "aj": 260.0, "ajRank": 47, "consistency": 7.43, "signature": 7.03, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 7.0, "Parking": 9.0, "Milk Balance": 8.0, "Ambiance": 7.0, "Menu Variety": 3.0, "Price": 5.0, "Wait Time": 8.0, "Service": 5.0, "Studyability": 6.0, "Exceptional?": 0.0, "Proximity to other things": 5.0}, "strengths": ["Parking", "Milk Balance", "Wait Time"], "weaknesses": ["Exceptional?", "Menu Variety", "Price"], "bestFor": ["quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["picky or adventurous orderers", "budget-conscious visits"], "awards": [], "report": "Simple Coffee House lands as a dependable C-Tier stop, ranked #43 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is easy parking, expertly balanced milk drinks (8/10), and fast turnaround. The tradeoff is nothing that particularly stands out, a narrow menu, and a steeper price tag. Best for quick car-friendly stops and grab-and-go convenience. Less ideal for picky or adventurous orderers and budget-conscious visits.", "recommendations": [["Brooke's Cafe", 0.872], ["Tyne Coffee", 0.639], ["Na Tart", 0.639]]}, {"name": "Na Tart", "venueType": "Cafe", "city": "Clairemont", "lat": 32.83, "lon": -117.19, "tier": "C", "balanced": 5.73, "balancedRank": 43, "aj": 287.0, "ajRank": 42, "consistency": 6.96, "signature": 7.2, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 9.0, "Parking": 6.0, "Milk Balance": 8.0, "Ambiance": 7.0, "Menu Variety": 3.0, "Price": 8.0, "Wait Time": 9.0, "Service": 4.0, "Studyability": 2.0, "Exceptional?": 0.0, "Proximity to other things": 7.0}, "strengths": ["Coffee Taste", "Wait Time", "Milk Balance"], "weaknesses": ["Exceptional?", "Studyability", "Menu Variety"], "bestFor": ["serious coffee drinkers", "grab-and-go convenience"], "notIdealFor": ["long study sessions", "picky or adventurous orderers"], "awards": [], "report": "Na Tart lands as a dependable C-Tier stop, ranked #44 of 54 this edition, operating as a full sit-down caf\u00e9 in Clairemont, CA. The draw here is genuinely excellent coffee (9/10 taste), fast turnaround, and expertly balanced milk drinks (8/10). The tradeoff is nothing that particularly stands out, not a place to settle in for long, and a narrow menu. Best for serious coffee drinkers and grab-and-go convenience. Less ideal for long study sessions and picky or adventurous orderers.", "recommendations": [["Simple Coffee House", 0.639], ["Zumbar Coffee & Tea", 0.619], ["Dark Horse Coffee", 0.5]]}, {"name": "Rikka Fikka", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "C", "balanced": 5.68, "balancedRank": 45, "aj": 332.0, "ajRank": 20, "consistency": 7.0, "signature": 7.42, "cluster": "The Destination Purist", "categories": {"Coffee Taste": 9.5, "Parking": 2.0, "Milk Balance": 9.0, "Ambiance": 6.0, "Menu Variety": 5.0, "Price": 7.0, "Wait Time": 1.0, "Service": 9.0, "Studyability": 2.0, "Exceptional?": 5.0, "Proximity to other things": 7.0}, "strengths": ["Coffee Taste", "Milk Balance", "Service"], "weaknesses": ["Wait Time", "Parking", "Studyability"], "bestFor": ["serious coffee drinkers"], "notIdealFor": ["long study sessions", "drivers needing easy parking", "anyone in a hurry"], "awards": [], "report": "Rikka Fikka lands as a dependable C-Tier stop, ranked #45 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is genuinely excellent coffee (9.5/10 taste), expertly balanced milk drinks (9/10), and standout service (9/10). The tradeoff is a slower wait, tricky parking, and not a place to settle in for long. Best for serious coffee drinkers. Less ideal for long study sessions, drivers needing easy parking, and anyone in a hurry.", "recommendations": [["Cafe Alessie", 0.619], ["Cafe Matinal", 0.567], ["Bird Rock Coffee", 0.51]]}, {"name": "Parakeet Cafe", "venueType": "Cafe", "city": "La Jolla", "lat": 32.84, "lon": -117.27, "tier": "C", "balanced": 5.64, "balancedRank": 46, "aj": 300.0, "ajRank": 37, "consistency": 7.27, "signature": 6.82, "cluster": "Room to Grow", "categories": {"Coffee Taste": 8.0, "Parking": 2.0, "Milk Balance": 8.0, "Ambiance": 7.0, "Menu Variety": 8.0, "Price": 4.0, "Wait Time": 7.0, "Service": 7.0, "Studyability": 4.0, "Exceptional?": 0.0, "Proximity to other things": 7.0}, "strengths": ["Coffee Taste", "Milk Balance", "Menu Variety"], "weaknesses": ["Exceptional?", "Parking", "Price"], "bestFor": ["serious coffee drinkers", "groups with varied orders"], "notIdealFor": ["drivers needing easy parking", "budget-conscious visits"], "awards": [], "report": "Parakeet Cafe lands as a dependable C-Tier stop, ranked #46 of 54 this edition, operating as a full sit-down caf\u00e9 in La Jolla, CA. The draw here is genuinely excellent coffee (8/10 taste), expertly balanced milk drinks (8/10), and a wide-ranging menu. The tradeoff is nothing that particularly stands out, tricky parking, and a steeper price tag. Best for serious coffee drinkers and groups with varied orders. Less ideal for drivers needing easy parking and budget-conscious visits.", "recommendations": [["Chance's Coffee", 0.642], ["Saigon Coffee", 0.536], ["Rikka Fikka", 0.501]]}, {"name": "Gold Soul", "venueType": "Drive-Thru", "city": "Mission Bay", "lat": 32.77, "lon": -117.22, "tier": "C", "balanced": 5.6, "balancedRank": 47, "aj": 262.0, "ajRank": 45, "consistency": 6.43, "signature": 7.46, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 8.0, "Parking": 10.0, "Milk Balance": 9.0, "Ambiance": 4.0, "Menu Variety": 3.0, "Price": 2.0, "Wait Time": 3.0, "Service": 9.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 8.0}, "strengths": ["Parking", "Milk Balance", "Service"], "weaknesses": ["Exceptional?", "Price", "Menu Variety"], "bestFor": ["quick car-friendly stops"], "notIdealFor": ["settling in to work or study", "picky or adventurous orderers", "budget-conscious visits"], "awards": [], "report": "Gold Soul lands as a dependable C-Tier stop, ranked #47 of 54 this edition, operating as a drive-thru built for speed over lingering in Mission Bay, CA. The draw here is easy parking, expertly balanced milk drinks (9/10), and standout service (9/10). The tradeoff is nothing that particularly stands out, a steeper price tag, and a narrow menu. Best for quick car-friendly stops. Less ideal for settling in to work or study, picky or adventurous orderers, and budget-conscious visits.", "recommendations": [["Tyne Coffee", 0.475], ["Dutch Bros", 0.43], ["Zumbar Coffee & Tea", 0.384]]}, {"name": "Kaffee Meister (Lakeside)", "venueType": "Cafe/Drive Thru", "city": "Lakeside", "lat": 32.86, "lon": -116.92, "tier": "C", "balanced": 5.5, "balancedRank": 48, "aj": 267.0, "ajRank": 44, "consistency": 7.18, "signature": 7.0, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 8.5, "Parking": 6.0, "Milk Balance": 2.0, "Ambiance": 9.0, "Menu Variety": 7.0, "Price": 6.0, "Wait Time": 8.0, "Service": 6.0, "Studyability": 5.0, "Exceptional?": 0.0, "Proximity to other things": 3.0}, "strengths": ["Ambiance", "Coffee Taste", "Wait Time"], "weaknesses": ["Exceptional?", "Milk Balance", "Proximity to other things"], "bestFor": ["serious coffee drinkers", "vibe-seekers", "grab-and-go convenience"], "notIdealFor": ["nothing major \u2014 broadly solid"], "awards": [], "report": "Kaffee Meister (Lakeside) lands as a dependable C-Tier stop, ranked #48 of 54 this edition, operating as a hybrid that offers both a counter and a drive-thru lane in Lakeside, CA. The draw here is strong ambiance (9/10), genuinely excellent coffee (8.5/10 taste), and fast turnaround. The tradeoff is nothing that particularly stands out, inconsistent milk drinks, and a location that's out of the way. Best for serious coffee drinkers, vibe-seekers, and grab-and-go convenience. Less ideal for nothing major \u2014 broadly solid.", "recommendations": [["Kaffee Meister (Santee)", 0.698], ["Dark Horse Coffee", 0.577], ["Caffeine Queens", 0.517]]}, {"name": "Zumbar Coffee & Tea", "venueType": "Cafe", "city": "La Jolla", "lat": 32.84, "lon": -117.27, "tier": "C", "balanced": 5.36, "balancedRank": 49, "aj": 255.0, "ajRank": 49, "consistency": 7.2, "signature": 6.85, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 6.0, "Parking": 8.0, "Milk Balance": 6.0, "Ambiance": 2.0, "Menu Variety": 3.0, "Price": 7.0, "Wait Time": 9.0, "Service": 6.0, "Studyability": 4.0, "Exceptional?": 0.0, "Proximity to other things": 8.0}, "strengths": ["Wait Time", "Parking", "Proximity to other things"], "weaknesses": ["Exceptional?", "Ambiance", "Menu Variety"], "bestFor": ["quick car-friendly stops", "grab-and-go convenience", "pairing with a day out nearby"], "notIdealFor": ["picky or adventurous orderers"], "awards": [], "report": "Zumbar Coffee & Tea lands as a dependable C-Tier stop, ranked #49 of 54 this edition, operating as a full sit-down caf\u00e9 in La Jolla, CA. The draw here is fast turnaround, easy parking, and a great location to pair with other plans. The tradeoff is nothing that particularly stands out, underwhelming ambiance, and a narrow menu. Best for quick car-friendly stops, grab-and-go convenience, and pairing with a day out nearby. Less ideal for picky or adventurous orderers.", "recommendations": [["Dark Horse Coffee", 0.769], ["Na Tart", 0.619], ["Simple Coffee House", 0.574]]}, {"name": "Honey Haven", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "C", "balanced": 5.3, "balancedRank": 50, "aj": 261.0, "ajRank": 46, "consistency": 7.64, "signature": 6.32, "cluster": "The Efficient Workhorse", "categories": {"Coffee Taste": 8.0, "Parking": 6.0, "Milk Balance": 6.0, "Ambiance": 3.0, "Menu Variety": 7.0, "Price": 6.0, "Wait Time": 6.0, "Service": 7.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 4.0}, "strengths": ["Coffee Taste", "Menu Variety", "Service"], "weaknesses": ["Exceptional?", "Ambiance", "Proximity to other things"], "bestFor": ["serious coffee drinkers", "groups with varied orders"], "notIdealFor": ["settling in to work or study"], "awards": [], "report": "Honey Haven lands as a dependable C-Tier stop, ranked #50 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is genuinely excellent coffee (8/10 taste), a wide-ranging menu, and standout service (7/10). The tradeoff is nothing that particularly stands out, underwhelming ambiance, and a location that's out of the way. Best for serious coffee drinkers and groups with varied orders. Less ideal for settling in to work or study.", "recommendations": [["Spill the Beans", 0.586], ["Cappuccino Cottage", 0.424], ["Zumbar Coffee & Tea", 0.424]]}, {"name": "Brooke's Cafe", "venueType": "Coffee Cart", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "C", "balanced": 5.2, "balancedRank": 51, "aj": 216.0, "ajRank": 53, "consistency": 7.1, "signature": 6.94, "cluster": "The Quick Fix", "categories": {"Coffee Taste": 6.0, "Parking": 9.0, "Milk Balance": 8.0, "Ambiance": 5.0, "Menu Variety": 4.0, "Price": 3.0, "Wait Time": 9.0, "Service": 3.0, "Studyability": null, "Exceptional?": 0.0, "Proximity to other things": 5.0}, "strengths": ["Parking", "Wait Time", "Milk Balance"], "weaknesses": ["Exceptional?", "Price", "Service"], "bestFor": ["quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["settling in to work or study", "budget-conscious visits"], "awards": [], "report": "Brooke's Cafe lands as a dependable C-Tier stop, ranked #51 of 54 this edition, operating as a cart-based operation that lives or dies on speed and drink quality in San Diego, CA. The draw here is easy parking, fast turnaround, and expertly balanced milk drinks (8/10). The tradeoff is nothing that particularly stands out, a steeper price tag, and hit-or-miss service. Best for quick car-friendly stops and grab-and-go convenience. Less ideal for settling in to work or study and budget-conscious visits.", "recommendations": [["Simple Coffee House", 0.872], ["Zumbar Coffee & Tea", 0.571], ["Starbucks (Lakeside)", 0.507]]}, {"name": "Em Coffee", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "D", "balanced": 4.82, "balancedRank": 52, "aj": 221.0, "ajRank": 52, "consistency": 6.97, "signature": 6.24, "cluster": "Room to Grow", "categories": {"Coffee Taste": 4.0, "Parking": 7.0, "Milk Balance": 7.0, "Ambiance": 8.0, "Menu Variety": 8.0, "Price": 0.0, "Wait Time": 2.0, "Service": 4.0, "Studyability": 7.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Ambiance", "Menu Variety", "Parking"], "weaknesses": ["Price", "Exceptional?", "Wait Time"], "bestFor": ["vibe-seekers", "remote work / studying", "groups with varied orders", "quick car-friendly stops"], "notIdealFor": ["anyone in a hurry", "budget-conscious visits"], "awards": [], "report": "Em Coffee lands as a D-Tier, needs work, ranked #52 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is strong ambiance (8/10), a wide-ranging menu, and easy parking. The tradeoff is a steeper price tag, nothing that particularly stands out, and a slower wait. Best for vibe-seekers, remote work / studying, groups with varied orders, and quick car-friendly stops. Less ideal for anyone in a hurry and budget-conscious visits.", "recommendations": [["Kini Cafe", 0.586], ["Lightbulb coffee", 0.552], ["MNGO cafe", 0.538]]}, {"name": "Kini Cafe", "venueType": "Coffee Cart", "city": "Del Mar", "lat": 32.96, "lon": -117.27, "tier": "D", "balanced": 4.82, "balancedRank": 52, "aj": 223.0, "ajRank": 51, "consistency": 7.56, "signature": 6.24, "cluster": "Room to Grow", "categories": {"Coffee Taste": 4.0, "Parking": 3.0, "Milk Balance": 7.0, "Ambiance": 8.0, "Menu Variety": 6.0, "Price": 3.0, "Wait Time": 8.0, "Service": 6.0, "Studyability": 4.0, "Exceptional?": 0.0, "Proximity to other things": 4.0}, "strengths": ["Ambiance", "Wait Time", "Milk Balance"], "weaknesses": ["Exceptional?", "Parking", "Price"], "bestFor": ["vibe-seekers", "grab-and-go convenience"], "notIdealFor": ["drivers needing easy parking", "budget-conscious visits"], "awards": [], "report": "Kini Cafe lands as a D-Tier, needs work, ranked #53 of 54 this edition, operating as a cart-based operation that lives or dies on speed and drink quality in Del Mar, CA. The draw here is strong ambiance (8/10), fast turnaround, and expertly balanced milk drinks (7/10). The tradeoff is nothing that particularly stands out, tricky parking, and a steeper price tag. Best for vibe-seekers and grab-and-go convenience. Less ideal for drivers needing easy parking and budget-conscious visits.", "recommendations": [["Starbucks (Lakeside)", 0.615], ["Em Coffee", 0.586], ["Dark Horse Coffee", 0.555]]}, {"name": "Dark Horse Coffee", "venueType": "Cafe", "city": "San Diego", "lat": 32.72, "lon": -117.16, "tier": "D", "balanced": 4.73, "balancedRank": 54, "aj": 215.0, "ajRank": 54, "consistency": 7.43, "signature": 6.03, "cluster": "Room to Grow", "categories": {"Coffee Taste": 5.0, "Parking": 7.0, "Milk Balance": 2.0, "Ambiance": 5.0, "Menu Variety": 4.0, "Price": 6.0, "Wait Time": 9.0, "Service": 6.0, "Studyability": 2.0, "Exceptional?": 0.0, "Proximity to other things": 6.0}, "strengths": ["Wait Time", "Parking"], "weaknesses": ["Exceptional?", "Milk Balance", "Studyability"], "bestFor": ["quick car-friendly stops", "grab-and-go convenience"], "notIdealFor": ["long study sessions"], "awards": [], "report": "Dark Horse Coffee lands as a D-Tier, needs work, ranked #54 of 54 this edition, operating as a full sit-down caf\u00e9 in San Diego, CA. The draw here is fast turnaround and easy parking. The tradeoff is nothing that particularly stands out, inconsistent milk drinks, and not a place to settle in for long. Best for quick car-friendly stops and grab-and-go convenience. Less ideal for long study sessions.", "recommendations": [["Zumbar Coffee & Tea", 0.769], ["Kaffee Meister (Lakeside)", 0.577], ["Starbucks (Lakeside)", 0.563]]}], "awards": {"Coffee Shop of the Year": "Cafe Matinal", "A.J.'s Coffee Shop of the Year": "Cafe Matinal", "Best Coffee": "Cafe Matinal", "Best Ambiance": "Inkafe", "Best Service": "Cafe Matinal", "Best Milk Drinks": "Cafe Matinal", "Best Menu": "Lovesong Coffee", "Best Value": "Cafe Matinal", "Fastest Service": "Inkafe", "Best Parking": "Cafe Bella", "Best Study Spot": "Cafe Bella", "Most Exceptional": "Cafe Matinal", "Worth the Drive": "Red White and Badass Brew", "Most Well Rounded": "Inkafe", "Hidden Gem": "Stir It Up", "Remote Work Champion": "Common Grounds Coffee", "Best Personality": "The Living Room Coffeehouse", "Best Coffee Cart": "Cafe Matinal", "Best Drive-Thru": "Red White and Badass Brew", "Best Specialty Roaster": "Compa Coffee Roasters"}, "archetypes": {"0": {"name": "Room to Grow", "tagline": "Below average across nearly every category \u2014 including the guide's only major chain.", "n": 5, "avgBalanced": 5.17, "members": ["Starbucks (Lakeside)", "Parakeet Cafe", "Em Coffee", "Kini Cafe", "Dark Horse Coffee"]}, "1": {"name": "The Efficient Workhorse", "tagline": "Fast, well-parked, great value, and usually out of the way \u2014 heavy on drive-thrus.", "n": 11, "avgBalanced": 6.37, "members": ["Red White and Badass Brew", "The Lean Bean", "Caffeine Queens", "Santee Coffee Corner", "Kaffee Meister (Santee)", "Cappuccino Cottage", "Hobcoffee Sabre Springs", "Spill the Beans", "Cafe Adesso", "Kaffee Meister (Lakeside)", "Honey Haven"]}, "2": {"name": "The Dependable All-Rounder", "tagline": "The guide's largest group \u2014 strong ambiance, menu, and studyability, just short on 'wow'.", "n": 21, "avgBalanced": 7.0, "members": ["Inkafe", "6 Grados", "Cafe Bella", "Vinam Cafe", "Common Grounds Coffee", "Lovesong Coffee", "Stir It Up", "The Grounds Coffee Bar", "Coffee N Talk", "Cuppa Cuppa coffee", "Muri Coffee", "Dutch Bros", "MNGO cafe", "Shaghf Cafe", "Compa Coffee Roasters", "Lakeside Social", "Mostra Coffee", "Lightbulb coffee", "ESSNTL coffee", "Brick and Bell Cafe", "Chance's Coffee"]}, "3": {"name": "The Destination Purist", "tagline": "The smallest, most elite group \u2014 best coffee, milk, and 'exceptional factor' in the guide, at the cost of parking and speed.", "n": 8, "avgBalanced": 7.26, "members": ["Cafe Matinal", "Better Buzz", "Bird Rock Coffee", "The Living Room Coffeehouse", "Cafe Alessie", "Brick 95", "Saigon Coffee", "Rikka Fikka"]}, "4": {"name": "The Quick Fix", "tagline": "Best parking and fastest service, but the narrowest menus and least ambiance.", "n": 9, "avgBalanced": 5.98, "members": ["Garden farms market", "The Keep Coffee", "Tyne Coffee", "Hunters of Hendrix", "Simple Coffee House", "Na Tart", "Gold Soul", "Zumbar Coffee & Tea", "Brooke's Cafe"]}}, "categories": ["Coffee Taste", "Parking", "Milk Balance", "Ambiance", "Menu Variety", "Price", "Wait Time", "Service", "Studyability", "Exceptional?", "Proximity to other things"], "meta": {"total": 54, "avgBalanced": 6.57, "medianBalanced": 6.64, "generatedFirstEdition": true}};
+</script>
+<script>
+/* ===================== UTIL ===================== */
+const CATS = DATA.categories;
+const CAT_SHORT = {
+  'Coffee Taste':'Taste','Parking':'Parking','Milk Balance':'Milk','Ambiance':'Ambiance',
+  'Menu Variety':'Menu','Price':'Price','Wait Time':'Speed','Service':'Service',
+  'Studyability':'Study','Exceptional?':'Exceptional','Proximity to other things':'Proximity'
+};
+const TIER_LABEL = {S:'🏆 S — Destination', A:'⭐ A — Excellent', B:'👍 B — Very Good', C:'🙂 C — Good', D:'☕ D — Below Average'};
+const byName = {};
+DATA.shops.forEach(s => byName[s.name] = s);
+
+function esc(str){ return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function uniq(arr){ return [...new Set(arr)]; }
+
+/* ===================== NAV ===================== */
+document.querySelectorAll('.navbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+/* ===================== MODAL / PROFILE ===================== */
+function openProfile(name){
+  const s = byName[name];
+  if(!s) return;
+  const el = document.getElementById('modal');
+  const catRows = CATS.map(c=>{
+    const v = s.categories[c];
+    if(v===null||v===undefined) return `<div class="catbar-row"><div class="catbar-label">${CAT_SHORT[c]}</div><div class="catbar-track"></div><div class="catbar-val">N/A</div></div>`;
+    return `<div class="catbar-row"><div class="catbar-label">${CAT_SHORT[c]}</div><div class="catbar-track"><div class="catbar-fill" style="width:${v*10}%"></div></div><div class="catbar-val">${v}</div></div>`;
+  }).join('');
+
+  const awardsHtml = s.awards.length ? s.awards.map(a=>`<span class="chip" style="cursor:default">🎖 ${esc(a)}</span>`).join(' ') : '<span style="color:var(--muted);font-size:12.5px;">No awards this edition</span>';
+  const recHtml = s.recommendations.length ? s.recommendations.map(([n,score])=>`<span class="chip rec-chip" onclick="openProfile('${n.replace(/'/g,"\\'")}')">${esc(n)} · ${Math.round(score*100)}%</span>`).join('') : '<span style="color:var(--muted);font-size:12.5px;">—</span>';
+
+  el.innerHTML = `
+    <button class="close" onclick="closeModal()">✕</button>
+    <div class="modal-tier-row"><span class="tierbadge ${s.tier}">${s.tier}</span><span style="color:var(--muted);font-size:12px;">#${s.balancedRank} of ${DATA.meta.total} · ${s.cluster}</span></div>
+    <div class="modal-name">${esc(s.name)}</div>
+    <div class="modal-sub">${esc(s.venueType)} · ${esc(s.city)}, CA</div>
+    <div class="score-row">
+      <div class="score-item"><div class="n">${s.balanced.toFixed(2)}</div><div class="l">Balanced</div></div>
+      <div class="score-item"><div class="n">${s.aj.toFixed(0)}</div><div class="l">A.J. /490</div></div>
+      <div class="score-item"><div class="n">${s.consistency.toFixed(2)}</div><div class="l">Consistency</div></div>
+      <div class="score-item"><div class="n">${s.signature.toFixed(2)}</div><div class="l">Signature</div></div>
+    </div>
+    <div class="modal-section-title">Category Breakdown</div>
+    ${catRows}
+    <div class="modal-section-title">Scouting Report</div>
+    <div class="modal-report">${esc(s.report)}</div>
+    <div class="modal-section-title">This Edition's Hardware</div>
+    <div>${awardsHtml}</div>
+    <div class="modal-section-title">If You Love This Spot, Try</div>
+    <div>${recHtml}</div>
+  `;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+/* ===================== HOME ===================== */
+function renderHome(){
+  const m = DATA.meta;
+  const tierCounts = {S:0,A:0,B:0,C:0,D:0};
+  DATA.shops.forEach(s=>tierCounts[s.tier]++);
+  const top = DATA.shops.find(s=>s.balancedRank===1);
+  const coty = DATA.awards['Coffee Shop of the Year'];
+
+  const donutSegs = ['S','A','B','C','D'].map(t=>({label:t, value:tierCounts[t], color:`var(--tier-${t})`}));
+
+  document.getElementById('tab-home').innerHTML = `
+    <div class="page-title">Welcome to the Guide</div>
+    <div class="page-sub">A data-driven look at ${m.total} San Diego coffee shops — scored across eleven categories, ranked four different ways, clustered into five archetypes. First edition.</div>
+
+    <div class="grid grid-4" style="margin-bottom:24px;">
+      <div class="card"><div class="stat-num">${m.total}</div><div class="stat-label">Shops Evaluated</div></div>
+      <div class="card"><div class="stat-num">${m.avgBalanced}</div><div class="stat-label">Avg Balanced Score</div></div>
+      <div class="card"><div class="stat-num mono" style="font-size:22px;">${esc(top.name)}</div><div class="stat-label">Coffee Shop of the Year</div></div>
+      <div class="card"><div class="stat-num">${tierCounts.S}</div><div class="stat-label">S-Tier Destinations</div></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-label" style="margin-top:0;">Tier Breakdown</div>
+        <div id="home-donut" style="display:flex; align-items:center; gap:22px;"></div>
+      </div>
+      <div class="card">
+        <div class="section-label" style="margin-top:0;">Top 6 — Balanced Ranking</div>
+        <div id="home-top6"></div>
+      </div>
+    </div>
+  `;
+
+  drawDonut(document.getElementById('home-donut'), donutSegs);
+  const top6 = DATA.shops.filter(s=>s.balancedRank<=6).sort((a,b)=>a.balancedRank-b.balancedRank);
+  document.getElementById('home-top6').innerHTML = top6.map(s=>`
+    <div style="display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); cursor:pointer;" onclick="openProfile('${s.name.replace(/'/g,"\\'")}')">
+      <span class="mono" style="color:var(--muted); width:18px;">${s.balancedRank}</span>
+      <span class="tierbadge ${s.tier}" style="min-width:20px;height:20px;font-size:10px;">${s.tier}</span>
+      <span style="flex:1; color:var(--cream); font-weight:500; font-size:13.5px;">${esc(s.name)}</span>
+      <span class="mono" style="color:var(--gold-hi); font-size:13px;">${s.balanced.toFixed(2)}</span>
+    </div>
+  `).join('');
+}
+
+function drawDonut(container, segs){
+  const total = segs.reduce((a,s)=>a+s.value,0);
+  const r = 54, cx=64, cy=64, sw=18;
+  let acc = 0;
+  const circ = 2*Math.PI*r;
+  let paths = segs.map(seg=>{
+    const frac = seg.value/total;
+    const dash = frac*circ;
+    const gap = circ-dash;
+    const rotate = (acc/total)*360 - 90;
+    acc += seg.value;
+    return `<circle r="${r}" cx="${cx}" cy="${cy}" fill="none" stroke="${seg.color}" stroke-width="${sw}"
+      stroke-dasharray="${dash} ${gap}" transform="rotate(${rotate} ${cx} ${cy})" />`;
+  }).join('');
+  const svg = `<svg width="128" height="128" viewBox="0 0 128 128">${paths}
+    <text x="64" y="60" text-anchor="middle" fill="var(--cream)" font-size="22" font-weight="600" font-family="Fraunces, serif">${total}</text>
+    <text x="64" y="76" text-anchor="middle" fill="var(--muted)" font-size="9">SHOPS</text>
+  </svg>`;
+  const legend = segs.map(s=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:6px;">
+    <span style="width:10px;height:10px;border-radius:3px;background:${s.color};display:inline-block;"></span>
+    <span style="color:var(--cream-dim);">${TIER_LABEL[s.label]}</span>
+    <span class="mono" style="margin-left:auto;color:var(--muted);">${s.value}</span>
+  </div>`).join('');
+  container.innerHTML = svg + `<div style="flex:1;">${legend}</div>`;
+}
+
+/* ===================== RANKINGS ===================== */
+let rankMode = 'balanced';
+let rankSort = {key:'balancedRank', dir:1};
+function renderRankings(){
+  document.getElementById('tab-rankings').innerHTML = `
+    <div class="page-title">Rankings</div>
+    <div class="page-sub">Toggle between the Balanced Score (equal-weight, the guide's primary public ranking) and the A.J. Score (personal weighted formula). Both rank columns are always shown side-by-side so you can see where personal taste and objective quality disagree.</div>
+    <div class="tabs-inline">
+      <button class="tab-inline-btn ${rankMode==='balanced'?'active':''}" id="rm-balanced">Balanced Ranking</button>
+      <button class="tab-inline-btn ${rankMode==='aj'?'active':''}" id="rm-aj">A.J. Ranking</button>
+    </div>
+    <div class="filterbar">
+      <input type="text" id="rk-search" placeholder="Search coffee shop…">
+      <select id="rk-venue"><option value="">All venue types</option></select>
+      <select id="rk-tier"><option value="">All tiers</option></select>
+      <select id="rk-city"><option value="">All neighborhoods</option></select>
+      <span class="filter-count" id="rk-count"></span>
+    </div>
+    <div class="card" style="padding:0; overflow-x:auto;">
+      <table id="rk-table"><thead></thead><tbody></tbody></table>
+    </div>
+    <div style="margin-top:10px; font-size:11.5px; color:var(--muted);">
+      <span style="color:var(--sage);">▲</span> = ranks higher on the other scale &nbsp;·&nbsp;
+      <span style="color:var(--rust);">▼</span> = ranks lower on the other scale
+    </div>
+  `;
+  document.getElementById('rm-balanced').onclick = ()=>{ rankMode='balanced'; rankSort={key:'balancedRank', dir:1}; renderRankings(); };
+  document.getElementById('rm-aj').onclick = ()=>{ rankMode='aj'; rankSort={key:'ajRank', dir:1}; renderRankings(); };
+
+  const venueSel = document.getElementById('rk-venue');
+  const tierSel = document.getElementById('rk-tier');
+  const citySel = document.getElementById('rk-city');
+  uniq(DATA.shops.map(s=>s.venueType)).sort().forEach(v=>venueSel.innerHTML+=`<option value="${v}">${v}</option>`);
+  ['S','A','B','C','D'].forEach(t=>tierSel.innerHTML+=`<option value="${t}">${TIER_LABEL[t]}</option>`);
+  uniq(DATA.shops.map(s=>s.city)).sort().forEach(c=>citySel.innerHTML+=`<option value="${c}">${c}</option>`);
+
+  [document.getElementById('rk-search'), venueSel, tierSel, citySel].forEach(elm=>{
+    elm.addEventListener('input', drawRankTable);
+  });
+
+  drawRankHeader();
+  drawRankTable();
+}
+function drawRankHeader(){
+  const thead = document.querySelector('#rk-table thead');
+  const cols = rankMode==='balanced'
+    ? [['balancedRank','#'],['name','Coffee Shop'],['venueType','Venue'],['city','Area'],['tier','Tier'],['balanced','Balanced'],['ajRank','A.J. Rank']]
+    : [['ajRank','#'],['name','Coffee Shop'],['venueType','Venue'],['city','Area'],['aj','A.J. Score'],['balancedRank','Balanced Rank']];
+  thead.innerHTML = '<tr>'+cols.map(([k,l])=>`<th data-key="${k}">${l}</th>`).join('')+'</tr>';
+  thead.querySelectorAll('th').forEach(th=>{
+    th.onclick = ()=>{
+      const key = th.dataset.key;
+      rankSort.dir = (rankSort.key===key) ? -rankSort.dir : 1;
+      rankSort.key = key;
+      drawRankTable();
+    };
+  });
+}
+function deltaBadge(primaryRank, otherRank){
+  const diff = primaryRank - otherRank; // positive = other rank is better (lower number)
+  if(diff===0) return `<span class="mono" style="color:var(--muted);">—</span>`;
+  const up = diff>0;
+  const color = up ? 'var(--sage)' : 'var(--rust)';
+  const arrow = up ? '▲' : '▼';
+  return `<span class="mono" style="color:${color};">#${otherRank} ${arrow}${Math.abs(diff)}</span>`;
+}
+function drawRankTable(){
+  const search = document.getElementById('rk-search').value.toLowerCase();
+  const venue = document.getElementById('rk-venue').value;
+  const tier = document.getElementById('rk-tier').value;
+  const city = document.getElementById('rk-city').value;
+
+  let rows = DATA.shops.filter(s=>
+    (!search || s.name.toLowerCase().includes(search)) &&
+    (!venue || s.venueType===venue) &&
+    (!tier || s.tier===tier) &&
+    (!city || s.city===city)
+  );
+  rows.sort((a,b)=>{
+    const k = rankSort.key;
+    if(typeof a[k]==='string') return a[k].localeCompare(b[k]) * rankSort.dir;
+    return (a[k]-b[k]) * rankSort.dir;
+  });
+  document.getElementById('rk-count').textContent = `${rows.length} of ${DATA.shops.length} shops`;
+
+  const tbody = document.querySelector('#rk-table tbody');
+  tbody.innerHTML = rows.map(s=>{
+    if(rankMode==='balanced'){
+      return `<tr onclick="openProfile('${s.name.replace(/'/g,"\\'")}')">
+        <td class="mono">${s.balancedRank}</td>
+        <td class="shopname">${esc(s.name)}</td>
+        <td class="venuetag">${esc(s.venueType)}</td>
+        <td class="venuetag">${esc(s.city)}</td>
+        <td><span class="tierbadge ${s.tier}">${s.tier}</span></td>
+        <td class="mono" style="color:var(--gold-hi);">${s.balanced.toFixed(2)}</td>
+        <td>${deltaBadge(s.balancedRank, s.ajRank)}</td>
+      </tr>`;
+    }
+    return `<tr onclick="openProfile('${s.name.replace(/'/g,"\\'")}')">
+      <td class="mono">${s.ajRank}</td>
+      <td class="shopname">${esc(s.name)}</td>
+      <td class="venuetag">${esc(s.venueType)}</td>
+      <td class="venuetag">${esc(s.city)}</td>
+      <td class="mono" style="color:var(--gold-hi);">${s.aj.toFixed(0)}</td>
+      <td>${deltaBadge(s.ajRank, s.balancedRank)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ===================== AWARDS ===================== */
+const AWARD_ICONS = {};
+function renderAwards(){
+  const entries = Object.entries(DATA.awards);
+  document.getElementById('tab-awards').innerHTML = `
+    <div class="page-title">Awards</div>
+    <div class="page-sub">${entries.length} awards, each built from combinations of metrics rather than a single top score. Click any card to see the winner's full profile.</div>
+    <div class="grid grid-3" id="award-grid"></div>
+  `;
+  document.getElementById('award-grid').innerHTML = entries.map(([award, winner])=>`
+    <div class="award-card" ${winner?`onclick="openProfile('${winner.replace(/'/g,"\\'")}')"`:''}>
+      <div class="award-title">${esc(award)}</div>
+      <div class="award-winner">${winner ? esc(winner) : '— not yet awarded —'}</div>
+    </div>
+  `).join('');
+}
+
+/* ===================== ARCHETYPES ===================== */
+function renderArchetypes(){
+  const arch = Object.values(DATA.archetypes);
+  document.getElementById('tab-archetypes').innerHTML = `
+    <div class="page-title">Coffee Shop Archetypes</div>
+    <div class="page-sub">Five archetypes from K-Means clustering across all eleven scoring categories. Silhouette scores were modest (San Diego coffee shops sit on more of a continuum than hard clusters) — five was chosen for descriptive richness, not because it's mathematically "the" answer.</div>
+    <div class="grid grid-2" id="arch-grid"></div>
+  `;
+  document.getElementById('arch-grid').innerHTML = arch.map(a=>`
+    <div class="archetype-card">
+      <div class="archetype-name">${esc(a.name)}</div>
+      <div class="archetype-meta">n=${a.n} · avg Balanced Score ${a.avgBalanced}</div>
+      <div class="archetype-tag">${esc(a.tagline)}</div>
+      <div class="member-list">${a.members.map(m=>`<span class="chip" onclick="openProfile('${m.replace(/'/g,"\\'")}')">${esc(m)}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+/* ===================== EXPLORER (MAP + NEIGHBORHOODS + VENUE) ===================== */
+function renderExplorer(){
+  document.getElementById('tab-explorer').innerHTML = `
+    <div class="page-title">Map &amp; Neighborhoods</div>
+    <div class="page-sub">A schematic layout of San Diego County — dot size reflects how many shops were evaluated there, color reflects average Balanced Score. Click a dot to see shops in that area.</div>
+    <div class="map-wrap"><svg id="sd-map" width="100%" viewBox="0 0 720 480"></svg></div>
+    <div id="map-detail" style="margin-top:16px;"></div>
+
+    <div class="section-label">Venue Type Comparison</div>
+    <div class="grid grid-2">
+      <div class="card"><div id="venue-bars"></div></div>
+      <div class="card"><div id="venue-table"></div></div>
+    </div>
+  `;
+  drawMap();
+  drawVenueComparison();
+}
+
+function drawMap(){
+  const svg = document.getElementById('sd-map');
+  const lats = DATA.shops.map(s=>s.lat), lons = DATA.shops.map(s=>s.lon);
+  const latMin=Math.min(...lats)-0.03, latMax=Math.max(...lats)+0.03;
+  const lonMin=Math.min(...lons)-0.03, lonMax=Math.max(...lons)+0.03;
+  const W=720,H=480, pad=40;
+  function proj(lat,lon){
+    const x = pad + (lon-lonMin)/(lonMax-lonMin) * (W-2*pad);
+    const y = pad + (latMax-lat)/(latMax-latMin) * (H-2*pad);
+    return [x,y];
+  }
+  const byCity = {};
+  DATA.shops.forEach(s=>{
+    byCity[s.city] = byCity[s.city] || {lat:s.lat, lon:s.lon, shops:[]};
+    byCity[s.city].shops.push(s);
+  });
+  const maxN = Math.max(...Object.values(byCity).map(c=>c.shops.length));
+  let dots = '';
+  Object.entries(byCity).forEach(([city,c])=>{
+    const [x,y] = proj(c.lat,c.lon);
+    const n = c.shops.length;
+    const avg = c.shops.reduce((a,s)=>a+s.balanced,0)/n;
+    const r = 6 + (n/maxN)*16;
+    const t = (avg-4.5)/(8.5-4.5);
+    const color = `hsl(${30+t*45}, 55%, ${35+t*25}%)`;
+    dots += `<circle class="map-dot" cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.85" stroke="#1c1410" stroke-width="1.5" onclick="showCity('${city.replace(/'/g,"\\'")}')"><title>${esc(city)} — ${n} shop(s), avg ${avg.toFixed(2)}</title></circle>`;
+    dots += `<text class="map-label" x="${x}" y="${y - r - 6}" text-anchor="middle">${esc(city)}</text>`;
+  });
+  svg.innerHTML = dots;
+}
+function showCity(city){
+  const shops = DATA.shops.filter(s=>s.city===city).sort((a,b)=>a.balancedRank-b.balancedRank);
+  const avg = (shops.reduce((a,s)=>a+s.balanced,0)/shops.length).toFixed(2);
+  document.getElementById('map-detail').innerHTML = `
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+        <div class="display" style="font-size:19px; font-weight:600;">${esc(city)}, CA</div>
+        <div class="mono" style="color:var(--gold-hi);">avg ${avg} · n=${shops.length}</div>
+      </div>
+      ${shops.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer;" onclick="openProfile('${s.name.replace(/'/g,"\\'")}')">
+        <span class="tierbadge ${s.tier}" style="min-width:20px;height:20px;font-size:10px;">${s.tier}</span>
+        <span style="flex:1;font-size:13.5px;">${esc(s.name)}</span>
+        <span class="venuetag">${esc(s.venueType)}</span>
+        <span class="mono" style="color:var(--gold-hi);">${s.balanced.toFixed(2)}</span>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+function drawVenueComparison(){
+  const byVenue = {};
+  DATA.shops.forEach(s=>{
+    byVenue[s.venueType] = byVenue[s.venueType] || [];
+    byVenue[s.venueType].push(s.balanced);
+  });
+  const stats = Object.entries(byVenue).map(([v,arr])=>({
+    venue:v, n:arr.length, mean: arr.reduce((a,b)=>a+b,0)/arr.length
+  })).sort((a,b)=>b.mean-a.mean);
+  const maxMean = Math.max(...stats.map(s=>s.mean));
+
+  document.getElementById('venue-bars').innerHTML = `<div class="section-label" style="margin-top:0;">Avg Balanced Score by Venue Type</div>` +
+    stats.map(s=>`
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+        <span style="color:var(--cream-dim);">${esc(s.venue)}</span>
+        <span class="mono" style="color:var(--gold-hi);">${s.mean.toFixed(2)} (n=${s.n})</span>
+      </div>
+      <div class="catbar-track"><div class="catbar-fill" style="width:${(s.mean/maxMean)*100}%"></div></div>
+    </div>`).join('');
+
+  document.getElementById('venue-table').innerHTML = `<div class="section-label" style="margin-top:0;">Neighborhoods by Sample Size</div>` +
+    uniq(DATA.shops.map(s=>s.city)).map(c=>{
+      const arr = DATA.shops.filter(s=>s.city===c);
+      const mean = arr.reduce((a,s)=>a+s.balanced,0)/arr.length;
+      return {c, n:arr.length, mean};
+    }).sort((a,b)=>b.n-a.n).slice(0,8).map(x=>`
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;">
+        <span style="color:var(--cream-dim);">${esc(x.c)}</span>
+        <span class="mono" style="color:var(--muted);">n=${x.n}</span>
+        <span class="mono" style="color:var(--gold-hi);">${x.mean.toFixed(2)}</span>
+      </div>`).join('');
+}
+
+/* ===================== SEARCH & COMPARE ===================== */
+let compareList = [];
+function renderSearch(){
+  document.getElementById('tab-search').innerHTML = `
+    <div class="page-title">Search &amp; Compare</div>
+    <div class="page-sub">Find a shop, or select up to 3 to compare side-by-side across all eleven scoring categories.</div>
+    <div class="filterbar">
+      <input type="text" id="sr-search" placeholder="Search by name, venue, or neighborhood…">
+      <span class="filter-count" id="sr-count"></span>
+    </div>
+    <div class="grid grid-2" style="align-items:start;">
+      <div>
+        <div class="section-label" style="margin-top:0;">Results</div>
+        <div id="sr-results"></div>
+      </div>
+      <div>
+        <div class="section-label" style="margin-top:0;">Compare (up to 3)</div>
+        <div class="grid grid-3" id="cmp-slots" style="margin-bottom:16px;"></div>
+        <div class="card" id="cmp-chart-wrap" style="display:none;">
+          <svg id="cmp-radar" width="100%" viewBox="0 0 400 400"></svg>
+          <div id="cmp-legend" style="margin-top:10px; display:flex; gap:14px; flex-wrap:wrap;"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('sr-search').addEventListener('input', drawSearchResults);
+  drawSearchResults();
+  drawCompareSlots();
+}
+function drawSearchResults(){
+  const q = document.getElementById('sr-search').value.toLowerCase();
+  let rows = DATA.shops.filter(s=> !q || s.name.toLowerCase().includes(q) || s.venueType.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
+  rows.sort((a,b)=>a.balancedRank-b.balancedRank);
+  document.getElementById('sr-count').textContent = `${rows.length} results`;
+  document.getElementById('sr-results').innerHTML = rows.slice(0,40).map(s=>{
+    const inCompare = compareList.includes(s.name);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);">
+      <span class="tierbadge ${s.tier}" style="min-width:20px;height:20px;font-size:10px;">${s.tier}</span>
+      <span style="flex:1;font-size:13.5px;cursor:pointer;" onclick="openProfile('${s.name.replace(/'/g,"\\'")}')">${esc(s.name)} <span class="venuetag">· ${esc(s.venueType)}, ${esc(s.city)}</span></span>
+      <span class="mono" style="color:var(--gold-hi);font-size:12.5px;">${s.balanced.toFixed(2)}</span>
+      <button class="btn ghost" style="padding:4px 10px;font-size:11px;" onclick="toggleCompare('${s.name.replace(/'/g,"\\'")}')">${inCompare?'Remove':'Compare'}</button>
+    </div>`;
+  }).join('');
+}
+function toggleCompare(name){
+  const idx = compareList.indexOf(name);
+  if(idx>-1){ compareList.splice(idx,1); }
+  else{ if(compareList.length>=3){ compareList.shift(); } compareList.push(name); }
+  drawSearchResults();
+  drawCompareSlots();
+}
+function drawCompareSlots(){
+  const slots = document.getElementById('cmp-slots');
+  const html = [0,1,2].map(i=>{
+    const name = compareList[i];
+    if(!name) return `<div class="compare-slot">Empty slot</div>`;
+    const s = byName[name];
+    return `<div class="compare-slot filled">
+      <span class="remove" onclick="toggleCompare('${name.replace(/'/g,"\\'")}')">✕ remove</span>
+      <div style="font-weight:600;font-size:13px;margin-top:4px;">${esc(s.name)}</div>
+      <div class="mono" style="font-size:11px;color:var(--muted);">${s.balanced.toFixed(2)} Balanced</div>
+    </div>`;
+  }).join('');
+  slots.innerHTML = html;
+  const wrap = document.getElementById('cmp-chart-wrap');
+  if(compareList.length>=2){
+    wrap.style.display='block';
+    drawRadar(compareList.map(n=>byName[n]));
+  } else {
+    wrap.style.display='none';
+  }
+}
+const CMP_COLORS = ['#cf9d3f','#8fae7a','#7ea3bc'];
+function drawRadar(shops){
+  const svg = document.getElementById('sd-radar-unused'); // placeholder no-op
+  const target = document.getElementById('cmp-radar');
+  const n = CATS.length;
+  const cx=200, cy=200, R=150;
+  const angle = i => (Math.PI*2*i/n) - Math.PI/2;
+
+  let axes = '', labels = '';
+  for(let i=0;i<n;i++){
+    const a = angle(i);
+    const x = cx + R*Math.cos(a), y = cy + R*Math.sin(a);
+    axes += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    const lx = cx + (R+22)*Math.cos(a), ly = cy + (R+22)*Math.sin(a);
+    labels += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--cream-dim)">${CAT_SHORT[CATS[i]]}</text>`;
+  }
+  let rings = '';
+  [0.25,0.5,0.75,1].forEach(f=>{
+    let pts = [];
+    for(let i=0;i<n;i++){ const a=angle(i); pts.push(`${cx+R*f*Math.cos(a)},${cy+R*f*Math.sin(a)}`); }
+    rings += `<polygon points="${pts.join(' ')}" fill="none" stroke="var(--line)" stroke-width="1"/>`;
+  });
+
+  let polys = '';
+  shops.forEach((s,idx)=>{
+    let pts = [];
+    for(let i=0;i<n;i++){
+      const v = s.categories[CATS[i]];
+      const val = (v===null||v===undefined) ? 0 : v;
+      const a = angle(i);
+      const rr = R * (val/10);
+      pts.push(`${cx+rr*Math.cos(a)},${cy+rr*Math.sin(a)}`);
+    }
+    polys += `<polygon points="${pts.join(' ')}" fill="${CMP_COLORS[idx]}" fill-opacity="0.18" stroke="${CMP_COLORS[idx]}" stroke-width="2"/>`;
+  });
+
+  target.innerHTML = rings + axes + polys + labels;
+  document.getElementById('cmp-legend').innerHTML = shops.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--cream-dim);">
+      <span style="width:10px;height:10px;border-radius:3px;background:${CMP_COLORS[i]};display:inline-block;"></span>${esc(s.name)}
+    </div>`).join('');
+}
+
+/* ===================== INIT ===================== */
+renderHome();
+renderRankings();
+renderAwards();
+renderArchetypes();
+renderExplorer();
+renderSearch();
+
+</script>
+</body>
+</html>
