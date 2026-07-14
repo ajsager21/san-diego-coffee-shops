@@ -259,6 +259,117 @@ a{ color: var(--gold-hi); }
 .compare-slot .remove{ align-self:flex-end; cursor:pointer; color:var(--muted); font-size:11px; }
 
 svg text{ font-family:'IBM Plex Mono', monospace; }
+
+/* =========================================================
+   MOBILE RESPONSIVENESS
+   ========================================================= */
+
+/* Tablet / narrow desktop: tighten grids and spacing */
+@media (max-width: 900px){
+  #main{ padding: 24px 20px 60px; }
+  .page-title{ font-size: 25px; }
+  .stat-num{ font-size: 27px; }
+}
+
+/* Phone/tablet: collapse sidebar into a horizontal scrollable top bar */
+@media (max-width: 780px){
+  #app{ flex-direction: column; }
+
+  #sidebar{
+    width: 100%;
+    height: auto;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .brand{
+    font-size: 14.5px;
+    white-space: nowrap;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  .brand small{ display: none; }
+  nav{
+    margin-top: 0;
+    flex-direction: row;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .navbtn{
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+  .navbtn .ico{ font-size: 13px; }
+  .sidebar-foot{ display: none; }
+
+  #main{ padding: 20px 14px 50px; }
+}
+
+/* Phone: stack grids, shrink type, compact tables and modal */
+@media (max-width: 640px){
+  .page-title{ font-size: 21px; }
+  .page-sub{ font-size: 13px; margin-bottom: 20px; }
+  .section-label{ margin-top: 22px; }
+
+  .grid-4, .grid-3, .grid-2{ grid-template-columns: 1fr; }
+  .grid{ gap: 12px; }
+
+  .card{ padding: 16px; }
+  .stat-num{ font-size: 24px; }
+  .stat-label{ font-size: 10.5px; }
+
+  /* Filter bars go full-width and stack */
+  .filterbar{ flex-direction: column; align-items: stretch; padding: 12px; }
+  .filterbar input[type=text], .filterbar select{ width: 100%; min-width: 0; }
+  .filter-count{ margin-left: 0; text-align: right; }
+
+  /* Tables: shrink and allow horizontal scroll within the card */
+  table{ font-size: 12px; }
+  thead th{ padding: 8px 8px; font-size: 10px; }
+  tbody td{ padding: 8px 8px; }
+  .shopname{ font-size: 12.5px; }
+  .venuetag{ font-size: 9.5px; }
+  .tierbadge{ min-width: 22px; height: 20px; font-size: 10px; }
+
+  .tabs-inline{ flex-wrap: wrap; }
+  .tab-inline-btn{ padding: 7px 13px; font-size: 12px; }
+
+  /* Modal: fit narrow viewports, tighten padding */
+  #overlay{ padding: 4vh 10px; }
+  #modal{ padding: 22px 18px; border-radius: 12px; }
+  .modal-name{ font-size: 21px; }
+  .score-row{ gap: 14px 22px; }
+  .score-item .n{ font-size: 17px; }
+  .catbar-label{ width: 108px; font-size: 11px; }
+  .modal-report{ font-size: 12.5px; }
+
+  /* Award & archetype cards */
+  .award-winner{ font-size: 17px; }
+  .archetype-name{ font-size: 18px; }
+
+  /* Map + compare charts: reduce surrounding padding so SVGs get more room */
+  .map-wrap{ padding: 12px; }
+  #cmp-chart-wrap{ padding: 14px; }
+
+  .compare-slot{ padding: 12px; }
+}
+
+/* Very small phones */
+@media (max-width: 380px){
+  .brand{ font-size: 13px; }
+  .navbtn{ padding: 7px 10px; font-size: 11.5px; }
+  .page-title{ font-size: 19px; }
+  .catbar-label{ width: 84px; font-size: 10px; }
+}
 </style>
 </head>
 <body>
