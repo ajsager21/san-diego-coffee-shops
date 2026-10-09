@@ -241,6 +241,21 @@ input[type=text]{ min-width:220px; }
 .map-dot:hover{ filter: brightness(1.3); }
 .map-label{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; fill: var(--cream-dim); pointer-events:none; }
 
+/* ---------- YOUR RANKING / WEIGHTS ---------- */
+.wpanel{ margin-bottom:18px; }
+.wpanel-head{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:14px; }
+.wpanel-head .hint{ font-size:12.5px; color:var(--cream-dim); line-height:1.5; flex:1 1 280px; }
+.wgrid{ display:grid; grid-template-columns:repeat(2,1fr); gap:6px 32px; }
+.wrow{ display:grid; grid-template-columns:118px 1fr 34px 40px; align-items:center; gap:10px; padding:5px 0; font-size:12.5px; }
+.wrow .wl{ color:var(--cream-dim); }
+.wrow .wv{ font-family:'IBM Plex Mono',monospace; color:var(--gold-hi); text-align:right; font-weight:600; }
+.wrow .wp{ font-family:'IBM Plex Mono',monospace; color:var(--muted); font-size:11px; text-align:right; }
+.wrow input[type=range]{ width:100%; accent-color:var(--gold); margin:0; cursor:pointer; }
+.wwarn{ display:none; color:var(--rust); font-size:12.5px; margin-top:10px; }
+.btn.small{ padding:6px 12px; font-size:12px; }
+@media (max-width:900px){ .wgrid{ grid-template-columns:1fr; } }
+@media (max-width:640px){ .wrow{ grid-template-columns:92px 1fr 26px 36px; gap:8px; } }
+
 /* ---------- MISC ---------- */
 .section-label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--gold); font-weight:600; margin: 30px 0 12px;}
 .section-label:first-child{ margin-top:0; }
@@ -606,14 +621,54 @@ function drawDonut(container, segs){
 /* ===================== RANKINGS ===================== */
 let rankMode = 'balanced';
 let rankSort = {key:'balancedRank', dir:1};
+
+/* ----- Your Ranking: user-defined weights ----- */
+const AJ_WEIGHTS = {'Coffee Taste':10,'Parking':1,'Milk Balance':5,'Ambiance':2,'Menu Variety':6,'Price':5,'Wait Time':2,'Service':5,'Studyability':3,'Exceptional?':5,'Proximity to other things':5};
+const WEIGHT_KEY = 'ajcoffee.userWeights.v1';
+function equalWeights(){ const w={}; CATS.forEach(c=>w[c]=5); return w; }
+function loadWeights(){
+  try{
+    const raw = localStorage.getItem(WEIGHT_KEY);
+    if(raw){
+      const o = JSON.parse(raw), w = {};
+      CATS.forEach(c=>{ const v = Number(o[c]); w[c] = (isFinite(v) && v>=0 && v<=10) ? v : 5; });
+      return w;
+    }
+  }catch(e){}
+  return equalWeights();
+}
+function saveWeights(){ try{ localStorage.setItem(WEIGHT_KEY, JSON.stringify(userWeights)); }catch(e){} }
+let userWeights = loadWeights();
+
+/* Weighted average on the 1-10 scale. Categories a shop wasn't rated on (N/A) are
+   left out and the remaining weights are renormalized, same as the Balanced score. */
+function userScoreFor(s){
+  let num=0, den=0;
+  CATS.forEach(c=>{
+    const v = s.categories[c], w = userWeights[c];
+    if(v===null || v===undefined || !w) return;
+    num += v*w; den += w;
+  });
+  return den ? num/den : null;
+}
+function recomputeUserRanks(){
+  DATA.shops.forEach(s=>{ s.userScore = userScoreFor(s); });
+  const scored = DATA.shops.filter(s=>s.userScore!==null).map(s=>({s, r:Math.round(s.userScore*100)}));
+  scored.sort((a,b)=>b.r-a.r);
+  scored.forEach((o,i)=>{ o.s.userRank = (i>0 && scored[i-1].r===o.r) ? scored[i-1].s.userRank : i+1; });
+  DATA.shops.filter(s=>s.userScore===null).forEach(s=>{ s.userRank = DATA.shops.length; s.userScore = 0; });
+}
+recomputeUserRanks();
 function renderRankings(){
   document.getElementById('tab-rankings').innerHTML = `
     <div class="page-title">Rankings</div>
-    <div class="page-sub">Toggle between the Balanced Score (equal-weight, the guide's primary public ranking) and the A.J. Score (personal weighted formula). Both rank columns are always shown side-by-side so you can see where personal taste and objective quality disagree.</div>
+    <div class="page-sub">Toggle between the Balanced Score (equal-weight, the guide's primary public ranking), the A.J. Score (personal weighted formula), and Your Ranking, where you set the weights. Both rank columns are always shown side-by-side so you can see where personal taste and objective quality disagree.</div>
     <div class="tabs-inline">
       <button class="tab-inline-btn ${rankMode==='balanced'?'active':''}" id="rm-balanced">Balanced Ranking</button>
       <button class="tab-inline-btn ${rankMode==='aj'?'active':''}" id="rm-aj">A.J. Ranking</button>
+      <button class="tab-inline-btn ${rankMode==='user'?'active':''}" id="rm-user">Your Ranking</button>
     </div>
+    ${rankMode==='user' ? weightPanelHtml() : ''}
     <div class="filterbar">
       <input type="text" id="rk-search" placeholder="Search coffee shop…">
       <select id="rk-venue"><option value="">All venue types</option></select>
@@ -631,6 +686,8 @@ function renderRankings(){
   `;
   document.getElementById('rm-balanced').onclick = ()=>{ rankMode='balanced'; rankSort={key:'balancedRank', dir:1}; renderRankings(); };
   document.getElementById('rm-aj').onclick = ()=>{ rankMode='aj'; rankSort={key:'ajRank', dir:1}; renderRankings(); };
+  document.getElementById('rm-user').onclick = ()=>{ rankMode='user'; rankSort={key:'userRank', dir:1}; renderRankings(); };
+  if(rankMode==='user') wireWeightPanel();
 
   const venueSel = document.getElementById('rk-venue');
   const tierSel = document.getElementById('rk-tier');
@@ -646,10 +703,58 @@ function renderRankings(){
   drawRankHeader();
   drawRankTable();
 }
+function weightPanelHtml(){
+  const rows = CATS.map((c,i)=>`
+    <div class="wrow">
+      <label class="wl" for="w-${i}">${esc(CAT_SHORT[c])}</label>
+      <input type="range" id="w-${i}" data-cat="${esc(c)}" min="0" max="10" step="1" value="${userWeights[c]}" aria-label="Weight for ${esc(c)}">
+      <span class="wv" id="wv-${i}">${userWeights[c]}</span>
+      <span class="wp" id="wp-${i}"></span>
+    </div>`).join('');
+  return `
+    <div class="card wpanel">
+      <div class="wpanel-head">
+        <div class="hint"><b style="color:var(--cream);">Set your own weights.</b> Slide each category from 0 (don't care) to 10 (matters most). The ranking below updates as you go. The percentage on the right is how much of your score each category drives.</div>
+        <button class="btn ghost small" id="w-preset-equal">Equal</button>
+        <button class="btn ghost small" id="w-preset-aj">Use A.J.'s weights</button>
+        <button class="btn ghost small" id="w-preset-zero">Clear all</button>
+      </div>
+      <div class="wgrid">${rows}</div>
+      <div class="wwarn" id="w-warn">Every weight is at 0, so there's nothing to rank on. Bump at least one up.</div>
+      <div style="margin-top:12px; font-size:11.5px; color:var(--muted); line-height:1.5;">Your score is a weighted average on the same 1 to 10 scale as the Balanced score. If a shop wasn't rated on a category (like Studyability for a cart), that category is skipped for that shop and the rest of your weights are scaled up to fill the gap.</div>
+    </div>`;
+}
+function syncWeightUi(){
+  const total = CATS.reduce((a,c)=>a+userWeights[c],0);
+  CATS.forEach((c,i)=>{
+    const sl = document.getElementById('w-'+i);
+    if(sl) sl.value = userWeights[c];
+    document.getElementById('wv-'+i).textContent = userWeights[c];
+    document.getElementById('wp-'+i).textContent = total ? Math.round(userWeights[c]/total*100)+'%' : '–';
+  });
+  document.getElementById('w-warn').style.display = total ? 'none' : 'block';
+}
+function onWeightsChanged(){
+  saveWeights();
+  recomputeUserRanks();
+  syncWeightUi();
+  drawRankTable();
+}
+function wireWeightPanel(){
+  document.querySelectorAll('.wrow input[type=range]').forEach(sl=>{
+    sl.addEventListener('input', ()=>{ userWeights[sl.dataset.cat] = Number(sl.value); onWeightsChanged(); });
+  });
+  document.getElementById('w-preset-equal').onclick = ()=>{ userWeights = equalWeights(); onWeightsChanged(); };
+  document.getElementById('w-preset-aj').onclick = ()=>{ userWeights = Object.assign({}, AJ_WEIGHTS); onWeightsChanged(); };
+  document.getElementById('w-preset-zero').onclick = ()=>{ CATS.forEach(c=>userWeights[c]=0); onWeightsChanged(); };
+  syncWeightUi();
+}
 function drawRankHeader(){
   const thead = document.querySelector('#rk-table thead');
   const cols = rankMode==='balanced'
     ? [['balancedRank','#'],['name','Coffee Shop'],['venueType','Venue'],['city','Area'],['tier','Tier'],['balanced','Balanced'],['ajRank','A.J. Rank']]
+    : rankMode==='user'
+    ? [['userRank','#'],['name','Coffee Shop'],['venueType','Venue'],['city','Area'],['userScore','Your Score'],['balancedRank','Balanced Rank'],['ajRank','A.J. Rank']]
     : [['ajRank','#'],['name','Coffee Shop'],['venueType','Venue'],['city','Area'],['aj','A.J. Score'],['balancedRank','Balanced Rank']];
   thead.innerHTML = '<tr>'+cols.map(([k,l])=>`<th data-key="${k}">${l}</th>`).join('')+'</tr>';
   thead.querySelectorAll('th').forEach(th=>{
@@ -684,7 +789,7 @@ function drawRankTable(){
   rows.sort((a,b)=>{
     const k = rankSort.key;
     if(typeof a[k]==='string') return a[k].localeCompare(b[k]) * rankSort.dir;
-    return (a[k]-b[k]) * rankSort.dir;
+    return ((a[k]-b[k]) * rankSort.dir) || (a.balancedRank-b.balancedRank);
   });
   document.getElementById('rk-count').textContent = `${rows.length} of ${DATA.shops.length} shops`;
 
@@ -699,6 +804,17 @@ function drawRankTable(){
         <td><span class="tierbadge ${s.tier}">${s.tier}</span></td>
         <td class="mono" style="color:var(--gold-hi);">${s.balanced.toFixed(2)}</td>
         <td>${deltaBadge(s.balancedRank, s.ajRank)}</td>
+      </tr>`;
+    }
+    if(rankMode==='user'){
+      return `<tr onclick="openProfile('${s.name.replace(/'/g,"\\'")}')">
+        <td class="mono">${s.userRank}</td>
+        <td class="shopname">${esc(s.name)}</td>
+        <td class="venuetag">${esc(s.venueType)}</td>
+        <td class="venuetag">${esc(s.city)}</td>
+        <td class="mono" style="color:var(--gold-hi);">${s.userScore.toFixed(2)}</td>
+        <td>${deltaBadge(s.userRank, s.balancedRank)}</td>
+        <td>${deltaBadge(s.userRank, s.ajRank)}</td>
       </tr>`;
     }
     return `<tr onclick="openProfile('${s.name.replace(/'/g,"\\'")}')">
